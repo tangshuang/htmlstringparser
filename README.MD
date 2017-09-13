@@ -5,7 +5,7 @@ A parser to parse HTML string to js object (json). The final json is the same tr
 ## Usage
 
 ```
-import HTMLStringParser from './htmlstring-parser'
+import HTMLStringParser from './HTMLStringParser'
 
 let html = '...'
 let parser = new HTMLStringParser(html)
@@ -17,7 +17,7 @@ let logo = header.getElementById('logo')
 console.log(JSON.stringify(rootNodes[0]))
 ```
 
-It's source code in `htmlstring-parser.js`, you should have to install `htmlparser2` first if you want to use htmlstring-parser.js. And if you do not want to install thirdpart vendor, use `htmlstring-parser.bundle.js` instead, it contains dependencies.
+It's source code in `HTMLStringParser.js`, you should have to install `htmlparser2` first if you want to use HTMLStringParser.js. And if you do not want to install thirdpart vendor, use `HTMLStringParser.bundle.js` instead, it contains dependencies.
 
 ## Methods of Parser
 
@@ -98,3 +98,57 @@ And a Virtual Node has its methods:
 ### select(selector)
 
 Whose usage is the same with Parser.
+
+## renderToHTMLString
+
+Use `renderToHTMLString.js` to do a reverse action. It provide a function `renderToHTMLString` to get a html string from VNode.
+
+```
+let vnode = {
+  name: 'div',
+  attrs: {
+    id: 'test',
+    class: 'fadeIn fade',
+  },
+  children: [
+    {
+      name: 'p',
+      text: 'I love you!',
+    },
+  ],
+}
+let html = renderToHTMLString(vnode)
+```
+
+Even you can use this function to get a xml structure data.
+
+## createElement
+
+Use createElement.js to build a real DOM element from VNode.
+
+```
+let vnode = {
+  name: 'div',
+  attrs: {
+    id: 'test',
+    class: 'fadeIn fade',
+  },
+  children: [
+    {
+      name: 'p',
+      text: 'I love you!',
+    },
+  ],
+  events: {
+    click(e) {
+      e.target.style.color = 'red'
+    },
+  },
+}
+let el = createElement(vnode)
+document.body.appendChild(el)
+```
+
+Notice `events` property. Unlike `renderToHTMLString`, you can use `events` to build callback functions.
+
+VNodes when using `renderToHTMLString` and `createElement` should not have both `text` and `children`. If a VNode has both `text` and `children`, `text` will be used and `children` will be ignored. So it is recommended to wrap a textNode in a single html tag like `span` if the textNode has brother nodes.
