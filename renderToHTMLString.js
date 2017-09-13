@@ -4,7 +4,7 @@ function renderToHTMLString(json) {
   // if it is an Array, it means there are several nodes on the top level
   if (Array.isArray(json)) {
     json.forEach(node => {
-      html += render(node)
+      html += renderToHTMLString(node)
     })
     return html
   }
@@ -47,7 +47,7 @@ function createNode(node) {
   }
 
   if (node.children && node.children.length) {
-    html += render(node.children)
+    html += renderToHTMLString(node.children)
   }
 
   html += `</${name}>`
@@ -55,5 +55,5 @@ function createNode(node) {
 }
 
 if(typeof module !== 'undefined' && typeof exports === 'object') {
-  module.exports = render
+  module.exports = renderToHTMLString
 }
