@@ -10,7 +10,7 @@ import HTMLStringParser from './HTMLStringParser'
 let html = '...'
 let parser = new HTMLStringParser(html)
 
-let rootNodes = parser.getElements()
+let rootNodes = parser.getRoots()
 let header = parser.getElementById('header')
 let logo = header.getElementById('logo')
 
