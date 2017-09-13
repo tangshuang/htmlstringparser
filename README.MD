@@ -123,7 +123,7 @@ As a developer, you may want to build your own VNode structure. In fact, develop
 ```
 class MyParser extends HTMLStringParser {
   createVNode(name, attrs) {
-    let obj = Object.create(this.VNodeProtoType)
+    let obj = Object.create(HTMLStringParser.VNodeProtoType)
     obj.tagName = name
     obj.attributes = attrs
     return obj
