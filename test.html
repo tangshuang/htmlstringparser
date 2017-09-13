@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <body>
-  <script src="HTMLStringParser.bundle.js"></script>
+  <script src="HTMLStringParser.browser.js"></script>
   <script src="renderToHTMLString.js"></script>
   <script src="createElement.js"></script>
   <script>
@@ -9,10 +9,10 @@
     <div id="test">
       <img src="a.jpg">
       <input type="checkbox" checked>
-      <p>this is a text</p>
+      <p>this is a text <span>color</span> </p>
     </div>
   `)
-  let elements = parser.getElements()
+  let elements = parser.getRoots()
   console.log(elements)
 
   let html = renderToHTMLString({
