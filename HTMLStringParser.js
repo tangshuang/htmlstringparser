@@ -42,6 +42,7 @@ export default class HTMLStringParser {
       return {
         parent: null,
         children: [],
+        text: null,
         getElements() {
             let elements = []
             this.children.forEach(item => {

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+
+<div id="app"></div>
+
+<script src="../VirtualDOM.browser.js"></script>
+<script>
+let vdom = new VirtualDOM({
+  template: `
+    <div id="{{id}}">
+      <p>{{text}}</p>
+    </div>
+  `,
+  data: {
+    id: 'my-test',
+    text: 'this is my first VirtualDOM demo.',
+  },
+  selector: '#app',
+})
+</script>

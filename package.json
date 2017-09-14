@@ -2,7 +2,7 @@
   "name": "htmlstring-parser",
   "version": "1.0.0",
   "description": "A parser to parse HTML string to js object (json). The final json is the same tree relationship as HTML DOM structure.",
-  "main": "htmlstring-parser.js",
+  "main": "HTMLStringParser.js",
   "dependencies": {
     "htmlparser2": "^3.9.2"
   },

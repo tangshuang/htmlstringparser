@@ -139,12 +139,13 @@ You may notice `Object.create(this.VNodeProtoType)`, yes this is the key for a V
 {
   parent: null,
   children: [],
+  text: null,
   getElementById: function() {},
   // .... other methods ...
 }
 ```
 
-`parent` and `children` are both in prototype.
+`parent`, `children`, `text`, `events` are both in prototype.
 
 
 ## renderToHTMLString

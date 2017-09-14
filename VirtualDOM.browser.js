@@ -1,4 +1,4 @@
-window["HTMLStringParser"] =
+window["VirtualDOM"] =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -61,7 +61,7 @@ window["HTMLStringParser"] =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 60);
+/******/ 	return __webpack_require__(__webpack_require__.s = 61);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -8581,196 +8581,375 @@ CollectingHandler.prototype.restart = function () {
 };
 
 /***/ }),
-/* 60 */
+/* 60 */,
+/* 61 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_htmlparser2__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_htmlparser2___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_htmlparser2__);
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createElement__ = __webpack_require__(62);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createElement___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__createElement__);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 
 
-var HTMLStringParser = function () {
-  function HTMLStringParser(html) {
-    _classCallCheck(this, HTMLStringParser);
 
-    var self = this;
-    var elements = [];
-    var recordtree = [];
+function foreach(obj, callback) {
+  var keys = Object.keys(obj);
+  keys.forEach(function (key) {
+    var value = obj[key];
+    callback(key, value);
+  });
+}
+function merge(obj1, obj2) {
+  var obj = {};
+  foreach(obj1, function (key, value) {
+    return obj[key] = value;
+  });
+  foreach(obj2, function (key, value) {
+    return obj[key] = value;
+  });
+  return obj;
+}
 
-    var parser = new __WEBPACK_IMPORTED_MODULE_0_htmlparser2__["Parser"]({
-      onopentag: function onopentag(name, attrs) {
-        var vnode = self.createVNode(name, attrs);
+var VirtualDOM = function () {
+  function VirtualDOM(_ref) {
+    var template = _ref.template,
+        data = _ref.data,
+        _ref$events = _ref.events,
+        events = _ref$events === undefined ? {} : _ref$events,
+        selector = _ref.selector;
 
-        var parent = recordtree.length ? recordtree[recordtree.length - 1] : null;
-        if (parent) {
-          vnode.parent = parent;
-          if (!parent.hasOwnProperty('children')) {
-            parent.children = [];
-          }
-          parent.children.push(vnode);
-        }
+    _classCallCheck(this, VirtualDOM);
 
-        recordtree.push(vnode);
-        elements.push(vnode);
-      },
-      ontext: function ontext(text) {
-        var vnode = recordtree[recordtree.length - 1];
-        if (vnode) {
-          vnode.text = text.trim();
-        }
-      },
-      onclosetag: function onclosetag(name) {
-        recordtree.pop();
-      }
-    });
-    parser.parseChunk(html);
-    parser.done();
-
-    this.elements = elements;
+    this.template = template;
+    this.data = data;
+    this.events = events;
+    this.vnodes = this.createVirtualDOM();
+    if (selector) {
+      this.render(selector);
+    }
   }
 
-  _createClass(HTMLStringParser, [{
-    key: 'createVNode',
-    value: function createVNode(name, attrs) {
-      var obj = Object.create(HTMLStringParser.VNodePrototype);
-      obj.name = name;
-      obj.id = attrs.id;
-      obj.class = attrs.class ? attrs.class.split(' ') : [];
-      obj.attrs = attrs;
-      return obj;
-    }
-  }, {
-    key: 'getRoots',
-    value: function getRoots() {
-      return this.elements.filter(function (item) {
+  _createClass(VirtualDOM, [{
+    key: 'createVirtualDOM',
+    value: function createVirtualDOM() {
+      var _this = this;
+
+      var template = this.template;
+      var data = this.data;
+      var interpose = function interpose(str, key, value) {
+        if (typeof str !== 'string') {
+          return str;
+        }
+        if (str.indexOf('{{') && str.indexOf('}}')) {
+          var reg = new RegExp('\{\{' + key + '\}\}', 'g');
+          str = str.replace(reg, value);
+        }
+        return str;
+      };
+
+      var dataKeys = Object.keys(data);
+      if (dataKeys.length) {
+        dataKeys.forEach(function (key) {
+          var value = data[key];
+          template = interpose(template, key, value);
+        });
+      }
+
+      var self = this;
+      var elements = [];
+      var recordtree = [];
+      var createVNode = function createVNode(name, attrs) {
+        var obj = {
+          name: name,
+          id: attrs.id,
+          class: attrs.class ? attrs.class.split(' ') : [],
+          parent: null,
+          children: [],
+          text: null,
+          events: {}
+        };
+
+        var attrKeys = Object.keys(attrs);
+        attrKeys.forEach(function (key) {
+          var value = attrs[key];
+          if (key.indexOf('on') === 0 && value.substring(0, 3) == '{{:' && value.substring(value.length - 2) == '}}') {
+            var eventName = key.substring(2).toLowerCase();
+            var eventCallbackName = value.substring(3, value.length - 2);
+
+            obj.events[eventName] = _this.events[eventCallbackName].bind(_this);
+            delete attrs[key];
+          }
+        });
+        obj.attrs = attrs;
+
+        return obj;
+      };
+
+      var parser = new __WEBPACK_IMPORTED_MODULE_0_htmlparser2__["Parser"]({
+        onopentag: function onopentag(name, attrs) {
+          var vnode = createVNode(name, attrs);
+
+          var parent = recordtree.length ? recordtree[recordtree.length - 1] : null;
+          if (parent) {
+            vnode.parent = parent;
+            if (!parent.hasOwnProperty('children')) {
+              parent.children = [];
+            }
+            parent.children.push(vnode);
+          }
+
+          recordtree.push(vnode);
+          elements.push(vnode);
+        },
+        ontext: function ontext(text) {
+          var vnode = recordtree[recordtree.length - 1];
+          if (vnode) {
+            vnode.text = text.trim();
+          }
+        },
+        onclosetag: function onclosetag(name) {
+          recordtree.pop();
+        }
+      });
+      parser.parseChunk(template);
+      parser.done();
+
+      elements.forEach(function (vnode) {
+        if (vnode.name === '@foreach') {
+          var attrs = vnode.attrs;
+          var items = data[attrs.target];
+          var key = attrs.key;
+          var value = attrs.value;
+          var children = vnode.children;
+          var childNodes = [];
+
+          if (items) {
+            foreach(items, function (i, item) {
+              children.forEach(function (child) {
+                child.text = interpose(child.text, key, i);
+                child.text = interpose(child.text, value, item);
+                foreach(child.attrs, function (k, v) {
+                  child.attrs[k] = interpose(v, key, i);
+                  child.attrs[k] = interpose(v, value, item);
+                });
+                child.id = child.attrs.id;
+                child.class = child.attrs.class ? child.attrs.class.split(' ') : [];
+              });
+              childNodes = childNodes.concat(children);
+            });
+          }
+
+          if (childNodes.length) {
+            var _parent$children;
+
+            var parent = vnode.parent;
+            var i = parent.children.indexOf(vnode);
+            (_parent$children = parent.children).splice.apply(_parent$children, [i, 1].concat(_toConsumableArray(childNodes)));
+          }
+        }
+      });
+
+      return elements.filter(function (item) {
         return !item.parent;
       });
     }
   }, {
-    key: 'getElements',
-    value: function getElements() {
-      return this.elements;
-    }
-  }, {
-    key: 'getElementById',
-    value: function getElementById(id) {
-      var els = this.getElements().filter(function (item) {
-        return item.id === id;
+    key: 'createDOM',
+    value: function createDOM() {
+      var elements = this.vnodes.map(function (item) {
+        return __WEBPACK_IMPORTED_MODULE_1__createElement___default()(item);
       });
-      if (els.length) {
-        return els[0];
-      }
-      return null;
+      return elements;
     }
   }, {
-    key: 'getElementsByClassName',
-    value: function getElementsByClassName(className) {
-      return this.getElements().filter(function (item) {
-        return item.class.indexOf(className) > -1;
+    key: 'render',
+    value: function render(selector) {
+      var elements = this.createDOM();
+      var container = document.querySelector(selector);
+      elements.forEach(function (item) {
+        return container.appendChild(item);
       });
     }
   }, {
-    key: 'getElementsByTagName',
-    value: function getElementsByTagName(tagName) {
-      return this.getElements().filter(function (item) {
-        return item.name == tagName;
-      });
-    }
-  }, {
-    key: 'getElementsByAttribute',
-    value: function getElementsByAttribute(attrName, attrValue) {
-      return this.getElements().filter(function (item) {
-        return item.attrs[attrName] && item.attrs[attrName] === attrValue;
-      });
-    }
-  }, {
-    key: 'querySelectorAll',
-    value: function querySelectorAll(selector) {
-      var type = selector.substring(0, 1);
-      var formula = selector.substring(1);
-      switch (type) {
-        case '#':
-          return this.getElements().filter(function (item) {
-            return item.id === formula;
-          });
-          break;
-        case '.':
-          return this.getElementsByClassName(formula);
-          break;
-        case '[':
-          formula = formula.substring(0, formula.length - 1);
+    key: 'update',
+    value: function update(data) {
+      this.data = merge(this.data, data);
 
-          var _formula$split = formula.split('='),
-              _formula$split2 = _slicedToArray(_formula$split, 2),
-              attrName = _formula$split2[0],
-              attrValue = _formula$split2[1];
-
-          return this.getElementsByAttribute(attrName, attrValue);
-          break;
-        default:
-          return this.getElementsByTagName(selector);
-      }
+      this.diff();
+      this.patch();
     }
   }, {
-    key: 'querySelector',
-    value: function querySelector(selector) {
-      var results = this.querySelectorAll(selector);
-      return results[0];
-    }
-  }], [{
-    key: 'VNodePrototype',
-    get: function get() {
-      var self = this;
-      return {
-        parent: null,
-        children: [],
-        text: null,
-        getElements: function getElements() {
-          var _this = this;
-
-          var elements = [];
-          this.children.forEach(function (item) {
-            elements.push(item);
-            if (item.children.length) {
-              elements = elements.concat(_this.getElements(item));
-            }
-          });
-          return elements;
-        },
-        getElementById: function getElementById(id) {
-          return self.getElementById.call(this, id);
-        },
-        getElementsByClassName: function getElementsByClassName(className) {
-          return self.getElementsByClassName.call(this, className);
-        },
-        getElementsByTagName: function getElementsByTagName(tagName) {
-          return self.getElementsByTagName.call(this, tagName);
-        },
-        getElementsByAttribute: function getElementsByAttribute(attrName, attrValue) {
-          return self.getElementsByAttribute.call(this, attrName, attrValue);
-        },
-        querySelector: function querySelector(selector) {
-          return self.querySelector.call(this, selector);
-        },
-        querySelectorAll: function querySelectorAll(selector) {
-          return self.querySelectorAll.call(this, selector);
-        }
+    key: 'diff',
+    value: function diff() {
+      var patches = [];
+      var hashNode = function hashNode(node) {
+        return node.name + ':' + JSON.stringify(node.attrs) + '|' + node.text;
       };
+      function diffNodes(oldNodes, newNodes, patches) {
+        var oldHashes = oldNodes.map(function (node) {
+          return hashNode(node);
+        });
+        var newHashes = newNodes.map(function (node) {
+          return hashNode(node);
+        });
+        var finalHashes = [];
+        var finalNodes = [];
+
+        oldHashes.forEach(function (item, i) {
+          // remove
+          if (newHashes.indexOf(item) === -1) {
+            patches.push({
+              action: 'remove',
+              target: oldNodes[i]
+            });
+          } else {
+            finalHashes.push(item);
+            finalNodes.push(oldNodes[i]);
+          }
+        });
+
+        newHashes.forEach(function (item, i) {
+          var index = finalHashes.indexOf(item);
+          // not exists, insert
+          if (index === -1) {
+            var targetNode = void 0;
+            var action = void 0;
+            if (!finalNodes.length || i > finalNodes.length) {
+              targetNode = oldNodes[i].parent;
+              action = 'appendChild';
+            } else {
+              targetNode = finalNodes[i];
+              action = 'insertBefore';
+            }
+            finalHashes.splice(i, 0, item);
+            finalNodes.splice(i, 0, newNodes[i]);
+            patches.push({
+              vnode: newNodes[i],
+              action: action,
+              target: targetNode
+            });
+          }
+          // moved
+          else if (index !== i) {
+              var oldChangedNode = finalNodes[index];
+              var _targetNode = finalNodes[i];
+              finalHashes.splice(index, 1);
+              finalNodes.splice(index, 1);
+              finalHashes.splice(i, 0, item);
+              finalNodes.splice(i, 0, newNodes[i]);
+              patches.push({
+                vnode: newNodes[i],
+                action: 'insertBefore',
+                target: _targetNode
+              });
+              diffChildren(oldChangedNode, newNodes[i], patches);
+            }
+            // the same, diff children
+            else {
+                diffChildren(finalNodes[index], newNodes[i], patches);
+              }
+        });
+      }
+      function diffChildren(oldNode, newNode, patches) {
+        var oldChildren = oldNode.children;
+        var newChildren = newNode.children;
+        diffNodes(oldChildren, newChildren, patches);
+      }
+
+      var lastVnodes = this.vnodes;
+      var newVnodes = this.createVirtualDOM();
+      diffNodes(lastVnodes, newVnodes, patches);
+
+      this.patches = patches;
+      this.vnodes = newVnodes;
+    }
+  }, {
+    key: 'patch',
+    value: function patch() {
+      this.patches.forEach(function (item) {
+        var target = item.target.$el;
+        switch (item.type) {
+          case 'insertBefore':
+            target.parentNode.insertBefore(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(item.vnode), target);
+            break;
+          case 'appendChild':
+            target.parentNode.appendChild(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(item.vnode));
+            break;
+          case 'remove':
+            item.target.$el = null;
+            target.parentNode.removeChild(target);
+            break;
+          default:
+            ;
+        }
+      });
     }
   }]);
 
-  return HTMLStringParser;
+  return VirtualDOM;
 }();
 
-/* harmony default export */ __webpack_exports__["default"] = (HTMLStringParser);
+/* harmony default export */ __webpack_exports__["default"] = (VirtualDOM);
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function createElement(node) {
+  var name = node.name;
+  var el = document.createElement(name);
+  var attrs = node.attrs;
+  var events = node.events;
+
+  var attrKeys = attrs ? Object.keys(attrs) : [];
+  if (attrKeys && attrKeys.length) {
+    attrKeys.forEach(function (key) {
+      var value = attrs[key];
+      el.setAttribute(key, value);
+    });
+  }
+
+  var eventKeys = events ? Object.keys(events) : [];
+  if (eventKeys && eventKeys.length) {
+    eventKeys.forEach(function (key) {
+      var callback = events[key];
+      el.addEventListener(key, callback, false);
+    });
+  }
+
+  if (node.text) {
+    el.innerText = node.text;
+    node.$el = el;
+    return el;
+  }
+
+  if (node.children && node.children.length) {
+    node.children.forEach(function (child) {
+      var childEl = createElement(child);
+      el.appendChild(childEl);
+      child.$el = childEl;
+    });
+  }
+
+  node.$el = el;
+
+  return el;
+}
+
+if (typeof module !== 'undefined' && ( false ? 'undefined' : _typeof(exports)) === 'object') {
+  module.exports = createElement;
+}
 
 /***/ })
 /******/ ]);
-window["HTMLStringParser"] = window["HTMLStringParser"]["default"];
+window["VirtualDOM"] = window["VirtualDOM"]["default"];
