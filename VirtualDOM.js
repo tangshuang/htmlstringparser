@@ -32,7 +32,7 @@ export default class VirtualDOM {
       if (typeof str !== 'string') {
         return str
       }
-      if (str.indexOf('{{') && str.indexOf('}}')) {
+      if (str.indexOf('{{') > -1 && str.indexOf('}}')) {
         let reg = new RegExp('\{\{' + key + '\}\}', 'g')
         str = str.replace(reg, value)
       }
@@ -84,6 +84,7 @@ export default class VirtualDOM {
         let parent = recordtree.length ? recordtree[recordtree.length - 1] : null
         if (parent) {
           vnode.parent = parent
+          // vnode.index = parent.children.length
           if (!parent.hasOwnProperty('children')) {
             parent.children = []
           }
@@ -118,16 +119,20 @@ export default class VirtualDOM {
         if (items) {
           foreach(items, (i, item) => {
             children.forEach(child => {
-              child.text = interpose(child.text, key, i)
-              child.text = interpose(child.text, value, item)
-              foreach(child.attrs, (k, v) => {
-                child.attrs[k] = interpose(v, key, i)
-                child.attrs[k] = interpose(v, value, item)
+              let node = {}
+              foreach(child, (prop, value) => {
+                node[prop] = value
               })
-              child.id = child.attrs.id
-              child.class = child.attrs.class ? child.attrs.class.split(' ') : []
+              node.text = interpose(node.text, key, i)
+              node.text = interpose(node.text, value, item)
+              foreach(node.attrs, (k, v) => {
+                node.attrs[k] = interpose(v, key, i)
+                node.attrs[k] = interpose(v, value, item)
+              })
+              node.id = node.attrs.id
+              node.class = node.attrs.class ? node.attrs.class.split(' ') : []
+              childNodes.push(node)
             })
-            childNodes = childNodes.concat(children)
           })
         }
 
@@ -159,7 +164,7 @@ export default class VirtualDOM {
   diff() {
     let patches = []
     let hashNode = node => {
-      return node.name + ':' + JSON.stringify(node.attrs) + '|' + node.text
+      return node.name + ':' + JSON.stringify(node.attrs)
     }
     function diffNodes(oldNodes, newNodes, patches) {
       let oldHashes = oldNodes.map(node => hashNode(node))
@@ -168,63 +173,75 @@ export default class VirtualDOM {
       let finalNodes = []
 
       oldHashes.forEach((item, i) => {
+        let oldNode = oldNodes[i]
         // remove
         if (newHashes.indexOf(item) === -1) {
           patches.push({
-            action: 'remove',
-            target: oldNodes[i],
+            action: 'removeChild',
+            target: oldNode,
           })
         }
         else {
           finalHashes.push(item)
-          finalNodes.push(oldNodes[i])
+          finalNodes.push(oldNode)
         }
       })
 
       newHashes.forEach((item, i) => {
+        let newNode = newNodes[i]
         let index = finalHashes.indexOf(item)
         // not exists, insert
         if (index === -1) {
-          let targetNode
-          let action
-          if (!finalNodes.length || i > finalNodes.length) {
-            targetNode = oldNodes[i].parent
-            action = 'appendChild'
+          if (finalNodes.length && i < finalNodes.length) {
+            let oldNode = finalNodes[i] // its must be a rendered vnode which has $element property
+            patches.push({
+              vnode: newNode,
+              action: 'insertBefore',
+              target: oldNode,
+            })
           }
           else {
-            targetNode = finalNodes[i]
-            action = 'insertBefore'
+            patches.push({
+              vnode: newNode,
+              action: 'appendChild',
+              target: oldNodes[0],
+            })
           }
+
           finalHashes.splice(i, 0, item)
-          finalNodes.splice(i, 0, newNodes[i])
-          patches.push({
-            vnode: newNodes[i],
-            action,
-            target: targetNode,
-          })
+          finalNodes.splice(i, 0, newNode)
         }
-        // moved
+        // moved, just treat it to be new
         else if (index !== i) {
-          let oldChangedNode = finalNodes[index]
-          let targetNode = finalNodes[i]
-          finalHashes.splice(index, 1)
-          finalNodes.splice(index, 1)
-          finalHashes.splice(i, 0, item)
-          finalNodes.splice(i, 0, newNodes[i])
+          finalHashes.splice(i, finalHashes.length - i)
+          finalNodes.splice(i, finalNodes.length - i)
+
+          let oldNode = finalNodes[i] // do NOT know whether it is rendered vnode
           patches.push({
-            vnode: newNodes[i],
-            action: 'insertBefore',
-            target: targetNode,
+            vnode: newNode,
+            action: 'appendChild',
+            target: oldNode,
           })
-          diffChildren(oldChangedNode, newNodes[i], patches)
         }
         // the same, diff children
         else {
-          diffChildren(finalNodes[index], newNodes[i], patches)
+          diffChildren(finalNodes[i], newNodes[i], patches)
         }
       })
+
+      return finalNodes
     }
     function diffChildren(oldNode, newNode, patches) {
+      let oldText = oldNode.text
+      let newText = newNode.text
+      if (oldText !== newText) {
+        patches.push({
+          vnode: oldNode,
+          action: 'innerText',
+          text: newText,
+        })
+      }
+
       let oldChildren = oldNode.children
       let newChildren = newNode.children
       diffNodes(oldChildren, newChildren, patches)
@@ -232,24 +249,28 @@ export default class VirtualDOM {
 
     let lastVnodes = this.vnodes
     let newVnodes = this.createVirtualDOM()
-    diffNodes(lastVnodes, newVnodes, patches)
+    let finalNodes = diffNodes(lastVnodes, newVnodes, patches)
 
     this.patches = patches
-    this.vnodes = newVnodes
+    this.vnodes = finalNodes
   }
   patch() {
     this.patches.forEach(item => {
-      let target = item.target.$el
-      switch (item.type) {
+      let target = item.target
+      switch (item.action) {
+        case 'removeChild':
+          target.$element.parentNode.removeChild(target)
+          target.$element.$vnode = null
+          target.$element = null
+          break
         case 'insertBefore':
-          target.parentNode.insertBefore(createElement(item.vnode), target)
+          target.$element.parentNode.insertBefore(createElement(item.vnode), target.$element)
           break
         case 'appendChild':
-          target.parentNode.appendChild(createElement(item.vnode))
+          target.$element.parentNode.appendChild(createElement(item.vnode))
           break
-        case 'remove':
-          target.parentNode.removeChild(target)
-          item.target.$el = null
+        case 'innerText':
+          item.vnode.$element.innerText = item.text
           break
         default:
           ;

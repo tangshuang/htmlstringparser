@@ -8,11 +8,33 @@ let vdom = new VirtualDOM({
   template: `
     <div id="{{id}}">
       <p>{{text}}</p>
+      <input onkeyup="{{:input}}" value="">
+      <a href="javascript:" onclick="{{:click}}">click me</a>
+      <ul>
+        <@foreach target="cats" key="name" value="color">
+          <li>{{name}}'s color is {{color}}</li>
+        </@foreach>
+      </ul>
     </div>
   `,
   data: {
     id: 'my-test',
     text: 'this is my first VirtualDOM demo.',
+    cats: {
+      caf: 'red',
+      sam: 'yellow',
+    },
+  },
+  events: {
+    input(e) {
+      e.target.value = 'xxx'
+    },
+    click(e) {
+      e.preventDefault()
+      vdom.update({
+        text: 'this is new content ' + Date.now(),
+      })
+    }
   },
   selector: '#app',
 })

@@ -8593,8 +8593,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createElement___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__createElement__);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 
@@ -8648,7 +8646,7 @@ var VirtualDOM = function () {
         if (typeof str !== 'string') {
           return str;
         }
-        if (str.indexOf('{{') && str.indexOf('}}')) {
+        if (str.indexOf('{{') > -1 && str.indexOf('}}')) {
           var reg = new RegExp('\{\{' + key + '\}\}', 'g');
           str = str.replace(reg, value);
         }
@@ -8700,6 +8698,7 @@ var VirtualDOM = function () {
           var parent = recordtree.length ? recordtree[recordtree.length - 1] : null;
           if (parent) {
             vnode.parent = parent;
+            // vnode.index = parent.children.length
             if (!parent.hasOwnProperty('children')) {
               parent.children = [];
             }
@@ -8734,16 +8733,20 @@ var VirtualDOM = function () {
           if (items) {
             foreach(items, function (i, item) {
               children.forEach(function (child) {
-                child.text = interpose(child.text, key, i);
-                child.text = interpose(child.text, value, item);
-                foreach(child.attrs, function (k, v) {
-                  child.attrs[k] = interpose(v, key, i);
-                  child.attrs[k] = interpose(v, value, item);
+                var node = {};
+                foreach(child, function (prop, value) {
+                  node[prop] = value;
                 });
-                child.id = child.attrs.id;
-                child.class = child.attrs.class ? child.attrs.class.split(' ') : [];
+                node.text = interpose(node.text, key, i);
+                node.text = interpose(node.text, value, item);
+                foreach(node.attrs, function (k, v) {
+                  node.attrs[k] = interpose(v, key, i);
+                  node.attrs[k] = interpose(v, value, item);
+                });
+                node.id = node.attrs.id;
+                node.class = node.attrs.class ? node.attrs.class.split(' ') : [];
+                childNodes.push(node);
               });
-              childNodes = childNodes.concat(children);
             });
           }
 
@@ -8752,7 +8755,7 @@ var VirtualDOM = function () {
 
             var parent = vnode.parent;
             var i = parent.children.indexOf(vnode);
-            (_parent$children = parent.children).splice.apply(_parent$children, [i, 1].concat(_toConsumableArray(childNodes)));
+            (_parent$children = parent.children).splice.apply(_parent$children, [i, 1].concat(childNodes));
           }
         }
       });
@@ -8791,7 +8794,7 @@ var VirtualDOM = function () {
     value: function diff() {
       var patches = [];
       var hashNode = function hashNode(node) {
-        return node.name + ':' + JSON.stringify(node.attrs) + '|' + node.text;
+        return node.name + ':' + JSON.stringify(node.attrs);
       };
       function diffNodes(oldNodes, newNodes, patches) {
         var oldHashes = oldNodes.map(function (node) {
@@ -8804,61 +8807,73 @@ var VirtualDOM = function () {
         var finalNodes = [];
 
         oldHashes.forEach(function (item, i) {
+          var oldNode = oldNodes[i];
           // remove
           if (newHashes.indexOf(item) === -1) {
             patches.push({
-              action: 'remove',
-              target: oldNodes[i]
+              action: 'removeChild',
+              target: oldNode
             });
           } else {
             finalHashes.push(item);
-            finalNodes.push(oldNodes[i]);
+            finalNodes.push(oldNode);
           }
         });
 
         newHashes.forEach(function (item, i) {
+          var newNode = newNodes[i];
           var index = finalHashes.indexOf(item);
           // not exists, insert
           if (index === -1) {
-            var targetNode = void 0;
-            var action = void 0;
-            if (!finalNodes.length || i > finalNodes.length) {
-              targetNode = oldNodes[i].parent;
-              action = 'appendChild';
-            } else {
-              targetNode = finalNodes[i];
-              action = 'insertBefore';
-            }
-            finalHashes.splice(i, 0, item);
-            finalNodes.splice(i, 0, newNodes[i]);
-            patches.push({
-              vnode: newNodes[i],
-              action: action,
-              target: targetNode
-            });
-          }
-          // moved
-          else if (index !== i) {
-              var oldChangedNode = finalNodes[index];
-              var _targetNode = finalNodes[i];
-              finalHashes.splice(index, 1);
-              finalNodes.splice(index, 1);
-              finalHashes.splice(i, 0, item);
-              finalNodes.splice(i, 0, newNodes[i]);
+            if (finalNodes.length && i < finalNodes.length) {
+              var oldNode = finalNodes[i]; // its must be a rendered vnode which has $element property
               patches.push({
-                vnode: newNodes[i],
+                vnode: newNode,
                 action: 'insertBefore',
-                target: _targetNode
+                target: oldNode
               });
-              diffChildren(oldChangedNode, newNodes[i], patches);
+            } else {
+              patches.push({
+                vnode: newNode,
+                action: 'appendChild',
+                target: oldNodes[0]
+              });
+            }
+
+            finalHashes.splice(i, 0, item);
+            finalNodes.splice(i, 0, newNode);
+          }
+          // moved, just treat it to be new
+          else if (index !== i) {
+              finalHashes.splice(i, finalHashes.length - i);
+              finalNodes.splice(i, finalNodes.length - i);
+
+              var _oldNode = finalNodes[i]; // do NOT know whether it is rendered vnode
+              patches.push({
+                vnode: newNode,
+                action: 'appendChild',
+                target: _oldNode
+              });
             }
             // the same, diff children
             else {
-                diffChildren(finalNodes[index], newNodes[i], patches);
+                diffChildren(finalNodes[i], newNodes[i], patches);
               }
         });
+
+        return finalNodes;
       }
       function diffChildren(oldNode, newNode, patches) {
+        var oldText = oldNode.text;
+        var newText = newNode.text;
+        if (oldText !== newText) {
+          patches.push({
+            vnode: oldNode,
+            action: 'innerText',
+            text: newText
+          });
+        }
+
         var oldChildren = oldNode.children;
         var newChildren = newNode.children;
         diffNodes(oldChildren, newChildren, patches);
@@ -8866,26 +8881,30 @@ var VirtualDOM = function () {
 
       var lastVnodes = this.vnodes;
       var newVnodes = this.createVirtualDOM();
-      diffNodes(lastVnodes, newVnodes, patches);
+      var finalNodes = diffNodes(lastVnodes, newVnodes, patches);
 
       this.patches = patches;
-      this.vnodes = newVnodes;
+      this.vnodes = finalNodes;
     }
   }, {
     key: 'patch',
     value: function patch() {
       this.patches.forEach(function (item) {
-        var target = item.target.$el;
-        switch (item.type) {
+        var target = item.target;
+        switch (item.action) {
+          case 'removeChild':
+            target.$element.parentNode.removeChild(target);
+            target.$element.$vnode = null;
+            target.$element = null;
+            break;
           case 'insertBefore':
-            target.parentNode.insertBefore(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(item.vnode), target);
+            target.$element.parentNode.insertBefore(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(item.vnode), target.$element);
             break;
           case 'appendChild':
-            target.parentNode.appendChild(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(item.vnode));
+            target.$element.parentNode.appendChild(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(item.vnode));
             break;
-          case 'remove':
-            item.target.$el = null;
-            target.parentNode.removeChild(target);
+          case 'innerText':
+            item.vnode.$element.innerText = item.text;
             break;
           default:
             ;
@@ -8929,7 +8948,8 @@ function createElement(node) {
 
   if (node.text) {
     el.innerText = node.text;
-    node.$el = el;
+    node.$element = el;
+    el.$vnode = node;
     return el;
   }
 
@@ -8937,11 +8957,13 @@ function createElement(node) {
     node.children.forEach(function (child) {
       var childEl = createElement(child);
       el.appendChild(childEl);
-      child.$el = childEl;
+      child.$element = childEl;
+      childEl.$vnode = child;
     });
   }
 
-  node.$el = el;
+  node.$element = el;
+  el.$vnode = node;
 
   return el;
 }

@@ -22,7 +22,8 @@ function createElement(node) {
 
   if (node.text) {
     el.innerText = node.text
-    node.$el = el
+    node.$element = el
+    el.$vnode = node
     return el
   }
 
@@ -30,11 +31,13 @@ function createElement(node) {
     node.children.forEach(child => {
       let childEl = createElement(child)
       el.appendChild(childEl)
-      child.$el = childEl
+      child.$element = childEl
+      childEl.$vnode = child
     })
   }
 
-  node.$el = el
+  node.$element = el
+  el.$vnode = node
 
   return el
 }
