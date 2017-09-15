@@ -8593,6 +8593,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createElement___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__createElement__);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 
@@ -8629,10 +8631,8 @@ var VirtualDOM = function () {
     this.template = template;
     this.data = data;
     this.events = events;
+    this.selector = selector;
     this.vnodes = this.createVirtualDOM();
-    if (selector) {
-      this.render(selector);
-    }
   }
 
   _createClass(VirtualDOM, [{
@@ -8698,7 +8698,6 @@ var VirtualDOM = function () {
           var parent = recordtree.length ? recordtree[recordtree.length - 1] : null;
           if (parent) {
             vnode.parent = parent;
-            // vnode.index = parent.children.length
             if (!parent.hasOwnProperty('children')) {
               parent.children = [];
             }
@@ -8751,18 +8750,29 @@ var VirtualDOM = function () {
           }
 
           if (childNodes.length) {
-            var _parent$children;
+            var parentChildren = vnode.parent ? vnode.parent.children : elements;
+            var i = parentChildren.indexOf(vnode);
+            parentChildren.splice.apply(parentChildren, [i, 1].concat(childNodes));
+          }
+        } else if (vnode.name === '@if') {
+          var _attrs = vnode.attrs;
+          var condition = _attrs.condition;
+          var _children = vnode.children;
+          var _parentChildren = vnode.parent ? vnode.parent.children : elements;
+          var _i = _parentChildren.indexOf(vnode);
 
-            var parent = vnode.parent;
-            var i = parent.children.indexOf(vnode);
-            (_parent$children = parent.children).splice.apply(_parent$children, [i, 1].concat(childNodes));
+          if (eval(condition)) {
+            _parentChildren.splice.apply(_parentChildren, [_i, 1].concat(_toConsumableArray(_children)));
+          } else {
+            _parentChildren.splice(_i, 1);
           }
         }
       });
 
-      return elements.filter(function (item) {
+      var roots = elements.filter(function (item) {
         return !item.parent;
       });
+      return roots;
     }
   }, {
     key: 'createDOM',
@@ -8774,9 +8784,16 @@ var VirtualDOM = function () {
     }
   }, {
     key: 'render',
-    value: function render(selector) {
+    value: function render() {
+      if (!this.selector) {
+        return;
+      }
+
+      var selector = this.selector;
       var elements = this.createDOM();
       var container = document.querySelector(selector);
+
+      container.innerHTML = '';
       elements.forEach(function (item) {
         return container.appendChild(item);
       });
@@ -8786,125 +8803,125 @@ var VirtualDOM = function () {
     value: function update(data) {
       this.data = merge(this.data, data);
 
+      console.log(this.vnodes);
+
       this.diff();
+
+      console.log(this.vnodes);
+
       this.patch();
+
+      console.log(this.vnodes);
     }
   }, {
     key: 'diff',
     value: function diff() {
-      var patches = [];
-      var hashNode = function hashNode(node) {
-        return node.name + ':' + JSON.stringify(node.attrs);
-      };
-      function diffNodes(oldNodes, newNodes, patches) {
-        var oldHashes = oldNodes.map(function (node) {
-          return hashNode(node);
-        });
-        var newHashes = newNodes.map(function (node) {
-          return hashNode(node);
-        });
-        var finalHashes = [];
-        var finalNodes = [];
+      function diffNodes(oldNodes, newNodes, parentNodeElement) {
+        var patches = [];
+        var cursor = -1;
 
-        oldHashes.forEach(function (item, i) {
+        if (!parentNodeElement) {
+          parentNodeElement = oldNodes[0].$element.parentNode;
+        }
+
+        for (var i = 0, len = newNodes.length; i < len; i++) {
+          cursor = i;
+
+          var newNode = newNodes[i];
           var oldNode = oldNodes[i];
-          // remove
-          if (newHashes.indexOf(item) === -1) {
+
+          if (oldNode === undefined) {
+            break;
+          }
+
+          if (newNode.name !== oldNode.name) {
+            break;
+          }
+
+          if (newNode.id !== oldNode.id) {
+            break;
+          }
+
+          if (JSON.stringify(newNode.attrs) != JSON.stringify(oldNode.attrs)) {
+            break;
+          }
+
+          var textPatches = diffText(oldNode, newNode);
+          var childrenPatches = diffChildren(oldNode, newNode);
+          patches = patches.concat(textPatches).concat(childrenPatches);
+        }
+
+        if (cursor > -1) {
+          for (var _i2 = cursor, _len = oldNodes.length; _i2 < _len; _i2++) {
+            var _oldNode = oldNodes[_i2];
             patches.push({
               action: 'removeChild',
-              target: oldNode
+              target: parentNodeElement,
+              vnode: _oldNode
             });
-          } else {
-            finalHashes.push(item);
-            finalNodes.push(oldNode);
           }
-        });
+          oldNodes.splice(cursor, oldNodes.length - cursor);
 
-        newHashes.forEach(function (item, i) {
-          var newNode = newNodes[i];
-          var index = finalHashes.indexOf(item);
-          // not exists, insert
-          if (index === -1) {
-            if (finalNodes.length && i < finalNodes.length) {
-              var oldNode = finalNodes[i]; // its must be a rendered vnode which has $element property
-              patches.push({
-                vnode: newNode,
-                action: 'insertBefore',
-                target: oldNode
-              });
-            } else {
-              patches.push({
-                vnode: newNode,
-                action: 'appendChild',
-                target: oldNodes[0]
-              });
-            }
-
-            finalHashes.splice(i, 0, item);
-            finalNodes.splice(i, 0, newNode);
+          for (var _i3 = cursor, _len2 = newNodes.length; _i3 < _len2; _i3++) {
+            var _newNode = newNodes[_i3];
+            patches.push({
+              action: 'appendChild',
+              target: parentNodeElement,
+              vnode: _newNode
+            });
           }
-          // moved, just treat it to be new
-          else if (index !== i) {
-              finalHashes.splice(i, finalHashes.length - i);
-              finalNodes.splice(i, finalNodes.length - i);
+        }
 
-              var _oldNode = finalNodes[i]; // do NOT know whether it is rendered vnode
-              patches.push({
-                vnode: newNode,
-                action: 'appendChild',
-                target: _oldNode
-              });
-            }
-            // the same, diff children
-            else {
-                diffChildren(finalNodes[i], newNodes[i], patches);
-              }
-        });
-
-        return finalNodes;
+        return patches;
       }
-      function diffChildren(oldNode, newNode, patches) {
+      function diffChildren(oldNode, newNode) {
+        var oldChildren = oldNode.children;
+        var newChildren = newNode.children;
+        var patches = diffNodes(oldChildren, newChildren, oldNode.$element);
+        return patches;
+      }
+      function diffText(oldNode, newNode) {
+        var patches = [];
         var oldText = oldNode.text;
         var newText = newNode.text;
         if (oldText !== newText) {
           patches.push({
-            vnode: oldNode,
             action: 'innerText',
+            target: oldNode.$element,
             text: newText
           });
         }
-
-        var oldChildren = oldNode.children;
-        var newChildren = newNode.children;
-        diffNodes(oldChildren, newChildren, patches);
+        return patches;
       }
 
       var lastVnodes = this.vnodes;
       var newVnodes = this.createVirtualDOM();
-      var finalNodes = diffNodes(lastVnodes, newVnodes, patches);
+      var patches = diffNodes(lastVnodes, newVnodes);
 
       this.patches = patches;
-      this.vnodes = finalNodes;
     }
   }, {
     key: 'patch',
     value: function patch() {
       this.patches.forEach(function (item) {
-        var target = item.target;
+        var target = void 0;
+        var vnode = void 0;
         switch (item.action) {
           case 'removeChild':
-            target.$element.parentNode.removeChild(target);
-            target.$element.$vnode = null;
-            target.$element = null;
-            break;
-          case 'insertBefore':
-            target.$element.parentNode.insertBefore(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(item.vnode), target.$element);
+            target = item.target;
+            vnode = item.vnode;
+            target.removeChild(vnode.$element);
+            vnode.$element.$vnode = null;
+            vnode.$element = null;
             break;
           case 'appendChild':
-            target.$element.parentNode.appendChild(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(item.vnode));
+            target = item.target;
+            vnode = item.vnode;
+            target.appendChild(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(vnode));
             break;
           case 'innerText':
-            item.vnode.$element.innerText = item.text;
+            target = item.target;
+            target.innerText = item.text;
             break;
           default:
             ;

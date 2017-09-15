@@ -15,6 +15,9 @@ let vdom = new VirtualDOM({
           <li>{{name}}'s color is {{color}}</li>
         </@foreach>
       </ul>
+      <@if condition="{{now}} > {{time}}">
+        <p>this will be show.</p>
+      </@if>
     </div>
   `,
   data: {
@@ -24,6 +27,8 @@ let vdom = new VirtualDOM({
       caf: 'red',
       sam: 'yellow',
     },
+    now: Date.now(),
+    time: 1124443,
   },
   events: {
     input(e) {
@@ -38,4 +43,5 @@ let vdom = new VirtualDOM({
   },
   selector: '#app',
 })
+vdom.render()
 </script>
