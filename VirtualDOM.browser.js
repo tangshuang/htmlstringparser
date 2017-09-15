@@ -8803,15 +8803,8 @@ var VirtualDOM = function () {
     value: function update(data) {
       this.data = merge(this.data, data);
 
-      console.log(this.vnodes);
-
       this.diff();
-
-      console.log(this.vnodes);
-
       this.patch();
-
-      console.log(this.vnodes);
     }
   }, {
     key: 'diff',
@@ -8842,10 +8835,6 @@ var VirtualDOM = function () {
             break;
           }
 
-          if (JSON.stringify(newNode.attrs) != JSON.stringify(oldNode.attrs)) {
-            break;
-          }
-
           var textPatches = diffText(oldNode, newNode);
           var childrenPatches = diffChildren(oldNode, newNode);
           patches = patches.concat(textPatches).concat(childrenPatches);
@@ -8869,6 +8858,7 @@ var VirtualDOM = function () {
               target: parentNodeElement,
               vnode: _newNode
             });
+            oldNodes.push(_newNode);
           }
         }
 

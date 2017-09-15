@@ -8,16 +8,17 @@ let vdom = new VirtualDOM({
   template: `
     <div id="{{id}}">
       <p>{{text}}</p>
-      <input onkeyup="{{:input}}" value="">
-      <a href="javascript:" onclick="{{:click}}">click me</a>
+      <p><a href="javascript:" onclick="{{:click}}">click me to refresh content</a></p>
+      <p><input onkeyup="{{:input}}" value=""></p>
       <ul>
         <@foreach target="cats" key="name" value="color">
           <li>{{name}}'s color is {{color}}</li>
         </@foreach>
       </ul>
-      <@if condition="{{now}} > {{time}}">
+      <@if condition="{{isShow}}">
         <p>this will be show.</p>
       </@if>
+      <p><a href="javascript:" onclick="{{:toggle}}">toggle</a></p>
     </div>
   `,
   data: {
@@ -27,8 +28,7 @@ let vdom = new VirtualDOM({
       caf: 'red',
       sam: 'yellow',
     },
-    now: Date.now(),
-    time: 1124443,
+    isShow: true,
   },
   events: {
     input(e) {
@@ -39,7 +39,13 @@ let vdom = new VirtualDOM({
       vdom.update({
         text: 'this is new content ' + Date.now(),
       })
-    }
+    },
+    toggle(e) {
+      e.preventDefault()
+      vdom.update({
+        isShow: !vdom.data.isShow,
+      })
+    },
   },
   selector: '#app',
 })

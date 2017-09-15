@@ -177,15 +177,8 @@ export default class VirtualDOM {
   update(data) {
     this.data = merge(this.data, data)
 
-    console.log(this.vnodes)
-
     this.diff()
-
-    console.log(this.vnodes)
-
     this.patch()
-
-    console.log(this.vnodes)
   }
   diff() {
     function diffNodes(oldNodes, newNodes, parentNodeElement) {
@@ -214,10 +207,6 @@ export default class VirtualDOM {
           break
         }
 
-        if (JSON.stringify(newNode.attrs) != JSON.stringify(oldNode.attrs)) {
-          break
-        }
-
         let textPatches = diffText(oldNode, newNode)
         let childrenPatches = diffChildren(oldNode, newNode)
         patches = patches.concat(textPatches).concat(childrenPatches)
@@ -241,6 +230,7 @@ export default class VirtualDOM {
             target: parentNodeElement,
             vnode: newNode,
           })
+          oldNodes.push(newNode)
         }
       }
 
