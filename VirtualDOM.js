@@ -1,5 +1,7 @@
 import {Parser} from 'htmlparser2'
 import createElement from './createElement'
+import diff from './diff'
+import patch from './patch'
 
 function foreach(obj, callback) {
   let keys = Object.keys(obj)
@@ -177,115 +179,10 @@ export default class VirtualDOM {
   update(data) {
     this.data = merge(this.data, data)
 
-    this.diff()
-    this.patch()
-  }
-  diff() {
-    function diffNodes(oldNodes, newNodes, parentNodeElement) {
-      let patches = []
-      let cursor = -1
-
-      if (!parentNodeElement) {
-        parentNodeElement = oldNodes[0].$element.parentNode
-      }
-
-      for (let i = 0, len = newNodes.length; i < len; i ++) {
-        cursor = i
-
-        let newNode = newNodes[i]
-        let oldNode = oldNodes[i]
-
-        if (oldNode === undefined) {
-          break
-        }
-
-        if (newNode.name !== oldNode.name) {
-          break
-        }
-
-        if (newNode.id !== oldNode.id) {
-          break
-        }
-
-        let textPatches = diffText(oldNode, newNode)
-        let childrenPatches = diffChildren(oldNode, newNode)
-        patches = patches.concat(textPatches).concat(childrenPatches)
-      }
-
-      if (cursor > -1) {
-        for (let i = cursor, len = oldNodes.length; i < len; i ++) {
-          let oldNode = oldNodes[i]
-          patches.push({
-            action: 'removeChild',
-            target: parentNodeElement,
-            vnode: oldNode,
-          })
-        }
-        oldNodes.splice(cursor, oldNodes.length - cursor)
-
-        for (let i = cursor, len = newNodes.length; i < len; i ++) {
-          let newNode = newNodes[i]
-          patches.push({
-            action: 'appendChild',
-            target: parentNodeElement,
-            vnode: newNode,
-          })
-          oldNodes.push(newNode)
-        }
-      }
-
-      return patches
-    }
-    function diffChildren(oldNode, newNode) {
-      let oldChildren = oldNode.children
-      let newChildren = newNode.children
-      let patches = diffNodes(oldChildren, newChildren, oldNode.$element)
-      return patches
-    }
-    function diffText(oldNode, newNode) {
-      let patches = []
-      let oldText = oldNode.text
-      let newText = newNode.text
-      if (oldText !== newText) {
-        patches.push({
-          action: 'innerText',
-          target: oldNode.$element,
-          text: newText,
-        })
-      }
-      return patches
-    }
-
     let lastVnodes = this.vnodes
     let newVnodes = this.createVirtualDOM()
-    let patches = diffNodes(lastVnodes, newVnodes)
+    let patches = diff(lastVnodes, newVnodes, null)
 
-    this.patches = patches
-  }
-  patch() {
-    this.patches.forEach(item => {
-      let target
-      let vnode
-      switch (item.action) {
-        case 'removeChild':
-          target = item.target
-          vnode = item.vnode
-          target.removeChild(vnode.$element)
-          vnode.$element.$vnode = null
-          vnode.$element = null
-          break
-        case 'appendChild':
-          target = item.target
-          vnode = item.vnode
-          target.appendChild(createElement(vnode))
-          break
-        case 'innerText':
-          target = item.target
-          target.innerText = item.text
-          break
-        default:
-          ;
-      }
-    })
+    patch(patches, lastVnodes[0].$element.parentNode)
   }
 }

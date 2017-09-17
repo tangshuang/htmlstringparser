@@ -61,7 +61,7 @@ window["VirtualDOM"] =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 61);
+/******/ 	return __webpack_require__(__webpack_require__.s = 62);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -8581,21 +8581,79 @@ CollectingHandler.prototype.restart = function () {
 };
 
 /***/ }),
-/* 60 */,
-/* 61 */
+/* 60 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function createElement(node) {
+  var name = node.name;
+  var el = document.createElement(name);
+  var attrs = node.attrs;
+  var events = node.events;
+
+  var attrKeys = attrs ? Object.keys(attrs) : [];
+  if (attrKeys && attrKeys.length) {
+    attrKeys.forEach(function (key) {
+      var value = attrs[key];
+      el.setAttribute(key, value);
+    });
+  }
+
+  var eventKeys = events ? Object.keys(events) : [];
+  if (eventKeys && eventKeys.length) {
+    eventKeys.forEach(function (key) {
+      var callback = events[key];
+      el.addEventListener(key, callback, false);
+    });
+  }
+
+  if (node.text) {
+    el.innerText = node.text;
+    node.$element = el;
+    el.$vnode = node;
+    return el;
+  }
+
+  if (node.children && node.children.length) {
+    node.children.forEach(function (child) {
+      var childEl = createElement(child);
+      el.appendChild(childEl);
+      child.$element = childEl;
+      childEl.$vnode = child;
+    });
+  }
+
+  node.$element = el;
+  el.$vnode = node;
+
+  return el;
+}
+
+if (typeof module !== 'undefined' && ( false ? 'undefined' : _typeof(exports)) === 'object') {
+  module.exports = createElement;
+}
+
+/***/ }),
+/* 61 */,
+/* 62 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_htmlparser2__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_htmlparser2___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_htmlparser2__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createElement__ = __webpack_require__(62);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createElement__ = __webpack_require__(60);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createElement___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__createElement__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__diff__ = __webpack_require__(63);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__patch__ = __webpack_require__(64);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+
 
 
 
@@ -8803,120 +8861,11 @@ var VirtualDOM = function () {
     value: function update(data) {
       this.data = merge(this.data, data);
 
-      this.diff();
-      this.patch();
-    }
-  }, {
-    key: 'diff',
-    value: function diff() {
-      function diffNodes(oldNodes, newNodes, parentNodeElement) {
-        var patches = [];
-        var cursor = -1;
-
-        if (!parentNodeElement) {
-          parentNodeElement = oldNodes[0].$element.parentNode;
-        }
-
-        for (var i = 0, len = newNodes.length; i < len; i++) {
-          cursor = i;
-
-          var newNode = newNodes[i];
-          var oldNode = oldNodes[i];
-
-          if (oldNode === undefined) {
-            break;
-          }
-
-          if (newNode.name !== oldNode.name) {
-            break;
-          }
-
-          if (newNode.id !== oldNode.id) {
-            break;
-          }
-
-          var textPatches = diffText(oldNode, newNode);
-          var childrenPatches = diffChildren(oldNode, newNode);
-          patches = patches.concat(textPatches).concat(childrenPatches);
-        }
-
-        if (cursor > -1) {
-          for (var _i2 = cursor, _len = oldNodes.length; _i2 < _len; _i2++) {
-            var _oldNode = oldNodes[_i2];
-            patches.push({
-              action: 'removeChild',
-              target: parentNodeElement,
-              vnode: _oldNode
-            });
-          }
-          oldNodes.splice(cursor, oldNodes.length - cursor);
-
-          for (var _i3 = cursor, _len2 = newNodes.length; _i3 < _len2; _i3++) {
-            var _newNode = newNodes[_i3];
-            patches.push({
-              action: 'appendChild',
-              target: parentNodeElement,
-              vnode: _newNode
-            });
-            oldNodes.push(_newNode);
-          }
-        }
-
-        return patches;
-      }
-      function diffChildren(oldNode, newNode) {
-        var oldChildren = oldNode.children;
-        var newChildren = newNode.children;
-        var patches = diffNodes(oldChildren, newChildren, oldNode.$element);
-        return patches;
-      }
-      function diffText(oldNode, newNode) {
-        var patches = [];
-        var oldText = oldNode.text;
-        var newText = newNode.text;
-        if (oldText !== newText) {
-          patches.push({
-            action: 'innerText',
-            target: oldNode.$element,
-            text: newText
-          });
-        }
-        return patches;
-      }
-
       var lastVnodes = this.vnodes;
       var newVnodes = this.createVirtualDOM();
-      var patches = diffNodes(lastVnodes, newVnodes);
+      var patches = Object(__WEBPACK_IMPORTED_MODULE_2__diff__["a" /* default */])(lastVnodes, newVnodes, null);
 
-      this.patches = patches;
-    }
-  }, {
-    key: 'patch',
-    value: function patch() {
-      this.patches.forEach(function (item) {
-        var target = void 0;
-        var vnode = void 0;
-        switch (item.action) {
-          case 'removeChild':
-            target = item.target;
-            vnode = item.vnode;
-            target.removeChild(vnode.$element);
-            vnode.$element.$vnode = null;
-            vnode.$element = null;
-            break;
-          case 'appendChild':
-            target = item.target;
-            vnode = item.vnode;
-            target.appendChild(__WEBPACK_IMPORTED_MODULE_1__createElement___default()(vnode));
-            break;
-          case 'innerText':
-            target = item.target;
-            target.innerText = item.text;
-            break;
-          default:
-            ;
-        }
-      });
+      Object(__WEBPACK_IMPORTED_MODULE_3__patch__["a" /* default */])(patches, lastVnodes[0].$element.parentNode);
     }
   }]);
 
@@ -8926,57 +8875,211 @@ var VirtualDOM = function () {
 /* harmony default export */ __webpack_exports__["default"] = (VirtualDOM);
 
 /***/ }),
-/* 62 */
-/***/ (function(module, exports, __webpack_require__) {
+/* 63 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = diff;
+function diff(oldNodes, newNodes) {
+  var parentNode = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
-function createElement(node) {
-  var name = node.name;
-  var el = document.createElement(name);
-  var attrs = node.attrs;
-  var events = node.events;
+  var oldIdentifies = oldNodes.map(function (vnode) {
+    return identify(vnode);
+  });
+  var newIdentifies = newNodes.map(function (vnode) {
+    return identify(vnode);
+  });
 
-  var attrKeys = attrs ? Object.keys(attrs) : [];
-  if (attrKeys && attrKeys.length) {
-    attrKeys.forEach(function (key) {
-      var value = attrs[key];
-      el.setAttribute(key, value);
-    });
+  var patches = [];
+
+  var finalIndentifies = [];
+  var finalNodes = [];
+
+  oldIdentifies.forEach(function (id, i) {
+    var oldNode = oldNodes[i];
+    if (newIdentifies.indexOf(id) === -1) {
+      patches.push(makePatch('remove', oldNode));
+    } else {
+      finalIndentifies.push(id);
+      finalNodes.push(oldNode);
+    }
+  });
+
+  var cursor = 0;
+
+  newIdentifies.forEach(function (id, i) {
+    var newNode = newNodes[i];
+
+    // all nodes are new
+    if (oldIdentifies.length === 0) {
+      patches.push(makePatch('append', parentNode, newNode));
+      return;
+    }
+
+    var targetIndentify = finalIndentifies[i];
+    var targetNode = finalNodes[i];
+
+    cursor = i;
+    var foundPosition = findIndentifyIndex(id, finalIndentifies, cursor);
+
+    // identifies are at the same position, means node has not changed
+    if (id === targetIndentify) {
+      patches = patches.concat(diffSameNodes(targetNode, newNode));
+    }
+    // identifies are NOT at the same position, but exists in old nodes, means node has been moved
+    else if (foundPosition !== -1) {
+        var oldNode = finalNodes[foundPosition];
+        var oldIndentify = finalIndentifies[foundPosition];
+        patches.push(makePatch('move', targetNode, oldNode));
+
+        finalNodes.splice(foundPosition, 1);
+        finalNodes.splice(i, 0, oldNode);
+        finalIndentifies.splice(foundPosition, 1);
+        finalIndentifies.splice(i, 0, oldIndentify);
+      }
+      // not exists, insert
+      else if (i < finalIndentifies.length) {
+          patches.push(makePatch('insert', targetNode, newNode));
+          finalNodes.splice(i, 0, newNode);
+          finalIndentifies.splice(i, 0, id);
+        }
+        // not exists, append
+        else {
+            patches.push(makePatch('append', parentNode, newNode));
+            finalNodes.push(newNode);
+            finalIndentifies.push(id);
+          }
+  });
+
+  // delete no use nodes
+  for (var i = cursor + 1; i < finalNodes.length; i++) {
+    var oldNode = finalNodes[i];
+    patches.push(makePatch('remove', oldNode));
   }
+  finalNodes.splice(cursor + 1, finalNodes.length - cursor);
 
-  var eventKeys = events ? Object.keys(events) : [];
-  if (eventKeys && eventKeys.length) {
-    eventKeys.forEach(function (key) {
-      var callback = events[key];
-      el.addEventListener(key, callback, false);
-    });
-  }
+  // update this.vnodes
+  oldNodes.splice(0, oldNodes.length);
+  finalNodes.forEach(function (item) {
+    return oldNodes.push(item);
+  });
 
-  if (node.text) {
-    el.innerText = node.text;
-    node.$element = el;
-    el.$vnode = node;
-    return el;
-  }
-
-  if (node.children && node.children.length) {
-    node.children.forEach(function (child) {
-      var childEl = createElement(child);
-      el.appendChild(childEl);
-      child.$element = childEl;
-      childEl.$vnode = child;
-    });
-  }
-
-  node.$element = el;
-  el.$vnode = node;
-
-  return el;
+  return patches;
 }
 
-if (typeof module !== 'undefined' && ( false ? 'undefined' : _typeof(exports)) === 'object') {
-  module.exports = createElement;
+function identify(vnode) {
+  if (vnode.attrs.key) {
+    return vnode.name + ':' + vnode.attrs.key;
+  }
+  return vnode.name + ':' + Object.keys(vnode.attrs).join(',') + '|' + !!vnode.text;
+}
+
+function makePatch(action, target, context) {
+  return {
+    action: action,
+    target: target,
+    context: context
+  };
+}
+
+function diffSameNodes(oldNode, newNode) {
+  var patches = [];
+
+  if (oldNode.text !== newNode.text) {
+    patches.push(makePatch('changeText', oldNode, newNode.text));
+  }
+
+  var attrsPatches = diffAttributes(oldNode, newNode);
+  if (attrsPatches.length) {
+    patches = patches.push(makePatch('changeAttribute', oldNode, attrsPatches));
+  }
+
+  var oldChildren = oldNode.children;
+  var newChildren = newNode.children;
+
+  patches = patches.concat(diff(oldChildren, newChildren, oldNode));
+
+  return patches;
+}
+
+function diffAttributes(oldNode, newNode) {
+  var patches = [];
+
+  var oldAttrs = oldNode.attrs;
+  var newAttrs = newNode.attrs;
+
+  var keys = Object.keys(newAttrs);
+  if (keys.length) {
+    keys.forEach(function (key) {
+      var oldValue = oldAttrs[key];
+      var newVaule = newAttrs[key];
+
+      if (oldValue !== newVaule) {
+        patches.push({
+          key: key,
+          value: newVaule
+        });
+      }
+    });
+  }
+
+  return patches;
+}
+
+function findIndentifyIndex(id, ids, cursor) {
+  for (var i = cursor, len = ids.length; i < len; i++) {
+    if (id === ids[i]) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/***/ }),
+/* 64 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = patch;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createElement__ = __webpack_require__(60);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createElement___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__createElement__);
+
+
+function patch(patches, topLevelElement) {
+  patches.forEach(function (item) {
+    var action = item.action,
+        target = item.target,
+        context = item.context;
+
+    var $element = target === null ? topLevelElement : target.$element;
+    switch (action) {
+      case 'remove':
+        $element.parentNode.removeChild($element);
+        $element.$vnode = null;
+        target.$element = null;
+        break;
+      case 'append':
+        $element.appendChild(__WEBPACK_IMPORTED_MODULE_0__createElement___default()(context));
+        break;
+      case 'insert':
+        $element.parentNode.insertBefore(__WEBPACK_IMPORTED_MODULE_0__createElement___default()(context), $element);
+        break;
+      case 'move':
+        $element.parentNode.insertBefore(context.$element, $element);
+        break;
+      case 'changeText':
+        $element.innerText = context;
+        break;
+      case 'changeAttribute':
+        var newAttrs = context;
+        newAttrs.forEach(function (attr) {
+          $element.setAttribute(attr.key, attr.value);
+        });
+        break;
+      default:
+        ;
+    }
+  });
 }
 
 /***/ })
