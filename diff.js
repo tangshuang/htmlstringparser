@@ -4,7 +4,7 @@ export default function diff(oldNodes, newNodes, parentNode = null) {
 
   let patches = []
 
-  let finalIndentifies = []
+  let finalIdentities = []
   let finalNodes = []
 
   oldIdentifies.forEach((id, i) => {
@@ -13,7 +13,7 @@ export default function diff(oldNodes, newNodes, parentNode = null) {
       patches.push(makePatch('remove', oldNode))
     }
     else {
-      finalIndentifies.push(id)
+      finalIdentities.push(id)
       finalNodes.push(oldNode)
     }
   })
@@ -29,38 +29,38 @@ export default function diff(oldNodes, newNodes, parentNode = null) {
       return
     }
 
-    let targetIndentify = finalIndentifies[i]
+    let targetIndentity = finalIdentities[i]
     let targetNode = finalNodes[i]
 
     cursor = i
-    let foundPosition = findIndentifyIndex(id, finalIndentifies, cursor)
+    let foundPosition = findIndentityIndex(id, finalIdentities, cursor)
 
     // identifies are at the same position, means node has not changed
-    if (id === targetIndentify) {
+    if (id === targetIndentity) {
       patches = patches.concat(diffSameNodes(targetNode, newNode))
     }
     // identifies are NOT at the same position, but exists in old nodes, means node has been moved
     else if (foundPosition !== -1) {
       let oldNode = finalNodes[foundPosition]
-      let oldIndentify = finalIndentifies[foundPosition]
+      let oldIndentity = finalIdentities[foundPosition]
       patches.push(makePatch('move', targetNode, oldNode))
 
       finalNodes.splice(foundPosition, 1)
       finalNodes.splice(i, 0, oldNode)
-      finalIndentifies.splice(foundPosition, 1)
-      finalIndentifies.splice(i, 0, oldIndentify)
+      finalIdentities.splice(foundPosition, 1)
+      finalIdentities.splice(i, 0, oldIndentity)
     }
     // not exists, insert
-    else if (i < finalIndentifies.length) {
+    else if (i < finalIdentities.length) {
       patches.push(makePatch('insert', targetNode, newNode))
       finalNodes.splice(i, 0, newNode)
-      finalIndentifies.splice(i, 0, id)
+      finalIdentities.splice(i, 0, id)
     }
     // not exists, append
     else {
       patches.push(makePatch('append', parentNode, newNode))
       finalNodes.push(newNode)
-      finalIndentifies.push(id)
+      finalIdentities.push(id)
     }
   })
 
@@ -137,7 +137,7 @@ function diffAttributes(oldNode, newNode) {
   return patches
 }
 
-function findIndentifyIndex(id, ids, cursor) {
+function findIndentityIndex(id, ids, cursor) {
   for (let i = cursor, len = ids.length; i < len; i ++) {
     if (id === ids[i]) {
       return i
