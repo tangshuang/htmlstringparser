@@ -8827,6 +8827,8 @@ var VirtualDOM = function () {
         }
       });
 
+      this.elements = elements;
+
       var roots = elements.filter(function (item) {
         return !item.parent;
       });
@@ -8866,6 +8868,16 @@ var VirtualDOM = function () {
       var patches = Object(__WEBPACK_IMPORTED_MODULE_2__diff__["a" /* default */])(lastVnodes, newVnodes, null);
 
       Object(__WEBPACK_IMPORTED_MODULE_3__patch__["a" /* default */])(patches, lastVnodes[0].$element.parentNode);
+    }
+  }, {
+    key: 'destroy',
+    value: function destroy() {
+      this.elements.forEach(function (vnode) {
+        var el = vnode.$element;
+        vnode.$element = null;
+        el.$vnode = null;
+        el.parentNode.removeChild(el);
+      });
     }
   }]);
 
