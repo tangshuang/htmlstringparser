@@ -250,6 +250,46 @@ Now let's look what `vdom` has:
 
 Get vdom template you have set. You can even reset template by using this.
 
+#### Interpolation
+
+Use `{{value}}` in template string, `value` is the property name of `data`, the value should be string or number.
+
+Use `{{:eventHandler}}` in template string, `eventHandler` is the property name ov `events`, the value should be a function.
+
+#### \@foreach tag
+
+I create a new tag whose name is `@foreach`, like:
+
+```
+<@foreach target="myObj" key="i" value="v">...</@foreach>
+```
+
+**target**
+
+The property name of `data`. The property value can be array or object. If array key will be index, if object key will be property name.
+
+**key**
+
+The interpolation name inner. As you know, `Array.forEach((v, i) => {})`, `i` and `v` is dynamic values, you can use `{{i}}` and `{{v}}` in the tag.
+
+**value**
+
+The same usage with `key`, stands for value.
+
+#### \@if
+
+`@if` tag is a special tag which control the content to be show in dom.
+
+```
+<@if condition="1 < 2">
+  <span>show</span>
+</@if>
+```
+
+**condition**
+
+The condition to be use. There can be interpolations in condition. ie. `condition="{{a}} > {{b}}"`.
+
 ### vdom.events
 
 Get events callback functions you have put into. You can even reset events functions by using this.
