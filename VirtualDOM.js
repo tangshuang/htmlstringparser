@@ -157,6 +157,8 @@ export default class VirtualDOM {
       }
     })
 
+    this.elements = elements
+
     let roots = elements.filter(item => !item.parent)
     return roots
   }
@@ -184,5 +186,13 @@ export default class VirtualDOM {
     let patches = diff(lastVnodes, newVnodes, null)
 
     patch(patches, lastVnodes[0].$element.parentNode)
+  }
+  destroy() {
+    this.elements.forEach(vnode => {
+      let el = vnode.$element
+      vnode.$element = null
+      el.$vnode = null
+      el.parentNode.removeChild(el)
+    })
   }
 }

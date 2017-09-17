@@ -201,3 +201,75 @@ document.body.appendChild(el)
 Notice `events` property. Unlike `renderToHTMLString`, you can use `events` to build callback functions.
 
 VNodes when using `renderToHTMLString` and `createElement` should not have both `text` and `children`. If a VNode has both `text` and `children`, `text` will be used and `children` will be ignored. So it is recommended to wrap a textNode in a single html tag like `span` if the textNode has brother nodes.
+
+After an element be created, the vnode will have a `$element` property which is a reference of the true dom element, and the dom element will have a `$vnode` property.
+
+## VirtualDOM
+
+Based on the previous features, I created a basical VirtualDOM Class:
+
+```
+import VirtualDOM from './VirtualDOM'
+
+let vdom = new VirtualDOM({
+  template: `
+    <div id="my-test">
+      <span>{{myText}}</span>
+      <a href="javascript:" onclick="{{:clickHandler}}">click me</a>
+      <@if condition="{{isShow}}"><span>I will be show!</span></@if>
+      <ul>
+        <@foreach target="myObj" key="i" value="v">
+          <li>{{i}} {{v}}</li>
+        </@foreach>
+      </ul>
+    </div>
+  `,
+  data: {
+    myText: 'this is my text',
+    isShow: true,
+    myObj: {a: 1, b: 2, c: 3},
+  },
+  events: {
+    click(e) {
+      e.preventDefault()
+      vdom.update({
+        myText: 'this is my new text',
+        isShow: false,
+      })
+    },
+  },
+  selector: '#app',
+})
+
+vdom.render() // then the new dom will be applied into DOM
+```
+
+Now let's look what `vdom` has:
+
+### vdom.template
+
+Get vdom template you have set. You can even reset template by using this.
+
+### vdom.events
+
+Get events callback functions you have put into. You can even reset events functions by using this.
+
+### vdom.selector
+
+The selector of DOM element which our vdom will be mounted to.
+
+### vdom.vnodes
+
+VNodes which is created by our Class.
+
+### vdom.render()
+
+When a vdom instance created, it will not render to the true DOM until you call render method.
+
+### vdom.update(data)
+
+Use new data to update view. The `data` will be merged into old data.
+
+### vdom.destroy()
+
+Destroy the mounted VNodes. And then you can reuse `render` method to render again before you destroy this instance.
