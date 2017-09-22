@@ -189,6 +189,10 @@ Then your VNode properties' name change to what you want.
 
 You may notice `proto`, yes this is the key for a VNode to have methods like `getElementById`. If you do not need this, you can drop it by return a new object. `parent`, `children`, `text`, `events` are all in prototype.
 
+## Virtual DOM
+
+I have create a virtual dom class, but moved to a new repository [here](https://github.com/tangshuang/hst-virtual-dom).
+
 ## MIT License
 
 Copyright 2017 tangshuang
