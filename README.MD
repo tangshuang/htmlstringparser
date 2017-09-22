@@ -1,25 +1,45 @@
 # HTMLStringParser
 
-A parser to parse HTML string to js object (json). The final json is the same tree relationship as HTML DOM structure.
+A parser to parse HTML string to js object (json).
+The final json is the same tree relationship as HTML DOM structure.
+
+## Install
+
+```
+npm install --save htmlstringparser
+```
+
+If you want to use in browser:
+
+```
+<script src="dist/HTMLStringParser"></script>
+<script>
+window['HTMLStringParser'] = window['HTMLStringParser']['default']
+</script>
+```
 
 ## Usage
 
 ```
-import HTMLStringParser from './HTMLStringParser'
+import HTMLStringParser from 'htmlstringparser'
 
 let html = '...'
 let parser = new HTMLStringParser(html)
 
 let rootNodes = parser.getRoots()
 let header = parser.getElementById('header')
-let logo = header.getElementById('logo')
+let containers = header.getElementsByClassName('container')
 
-console.log(JSON.stringify(rootNodes[0]))
+console.log(rootNodes, header, containers)
 ```
 
-It's source code in `HTMLStringParser.js`, you should have to install `htmlparser2` first if you want to use HTMLStringParser.js. And if you do not want to install thirdpart vendor, use `HTMLStringParser.browser.js` instead, it contains dependencies.
+HTMLStringParser is based on `htmlparser2`, and packed it in the dist code. If you have another module using `htmlparser2`, you can use source code which is in ES6:
 
-## Methods of Parser
+```
+import HTMLStringParser from 'htmlstringparser/HTMLStringParser'
+```
+
+## Methods
 
 ### getRoots()
 
@@ -36,7 +56,7 @@ And `getRoots` will get two nodes, header and footer, in an array.
 
 ### getElements()
 
-Get all elements/tags without level gap in an array.
+Get all elements/tags without level gap/flat in an array.
 
 ### getElementById(id)
 
@@ -76,9 +96,9 @@ let p = parser.querySelectorAll('p') // by tagName
 let data = parser.querySelectorAll('[data=my_name]') // by attribute key and value
 ```
 
-## Virtual Node
+## VNode
 
-Every HTML tag will be convert to be a object which is called **Virtual Node** here.
+Every HTML tag will be convert to be a object which is called **Virtual Node**/**VNode** here.
 
 A Virtual Node is like:
 
@@ -104,17 +124,52 @@ And a Virtual Node also has its methods:
 
 ### getElementById(id)
 
+Return the first element under current VNode which has id attribute equals passed id.
+
 ### getElementsByClassName(className)
+
+Return elements by className under current VNode in an array.
 
 ### getElementsByTagName(tagName)
 
+Return elements by tagName under current VNode in an array.
+
 ### getElementsByAttribute(attrName, attrValue)
+
+Return elements by attribute name and value under current VNode in an array.
 
 ### querySelector(selector)
 
+Return the first element by selector under current VNode.
+
 ### querySelectorAll(selector)
 
-Whose usage is the same with Parser.
+Return elements by selector under current VNode in an array.
+
+## renderToHTMLString
+
+Use `renderToHTMLString.js` to do a reverse action. It provides a function `renderToHTMLString` to get a html string from VNode.
+
+```
+import renderToHTMLString from 'htmlstringparser/renderToHTMLString'
+
+let vnode = {
+  name: 'div',
+  attrs: {
+    id: 'test',
+    class: 'fadeIn fade',
+  },
+  children: [
+    {
+      name: 'p',
+      text: 'I love you!',
+    },
+  ],
+}
+let htmlstr = renderToHTMLString(vnode)
+```
+
+Even you can use this function to get a xml structure data. However, html has special tags like `img` `input` `meta` which has no close tag, so it is not recommended. 
 
 ## Extends
 
@@ -122,194 +177,24 @@ As a developer, you may want to build your own VNode structure. In fact, develop
 
 ```
 class MyParser extends HTMLStringParser {
-  createVNode(name, attrs) {
-    let obj = Object.create(HTMLStringParser.VNodeProtoType)
-    obj.tagName = name
-    obj.attributes = attrs
-    return obj
+  createVNode(name, attrs, proto) {
+    proto.tagName = name
+    proto.attributes = attrs
+    return proto
   }
 }
 ```
 
 Then your VNode properties' name change to what you want.
 
-You may notice `Object.create(this.VNodeProtoType)`, yes this is the key for a VNode to have methods like `getElementById`. If you do not need this, you can drop this step. `this.VNodeProtoType` is like:
+You may notice `proto`, yes this is the key for a VNode to have methods like `getElementById`. If you do not need this, you can drop it by return a new object. `parent`, `children`, `text`, `events` are all in prototype.
 
-```
-{
-  parent: null,
-  children: [],
-  text: null,
-  getElementById: function() {},
-  // .... other methods ...
-}
-```
+## MIT License
 
-`parent`, `children`, `text`, `events` are both in prototype.
+Copyright 2017 tangshuang
 
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-## renderToHTMLString
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-Use `renderToHTMLString.js` to do a reverse action. It provide a function `renderToHTMLString` to get a html string from VNode.
-
-```
-let vnode = {
-  name: 'div',
-  attrs: {
-    id: 'test',
-    class: 'fadeIn fade',
-  },
-  children: [
-    {
-      name: 'p',
-      text: 'I love you!',
-    },
-  ],
-}
-let html = renderToHTMLString(vnode)
-```
-
-Even you can use this function to get a xml structure data.
-
-## createElement
-
-Use createElement.js to build a real DOM element from VNode.
-
-```
-let vnode = {
-  name: 'div',
-  attrs: {
-    id: 'test',
-    class: 'fadeIn fade',
-  },
-  children: [
-    {
-      name: 'p',
-      text: 'I love you!',
-    },
-  ],
-  events: {
-    click(e) {
-      e.target.style.color = 'red'
-    },
-  },
-}
-let el = createElement(vnode)
-document.body.appendChild(el)
-```
-
-Notice `events` property. Unlike `renderToHTMLString`, you can use `events` to build callback functions.
-
-VNodes when using `renderToHTMLString` and `createElement` should not have both `text` and `children`. If a VNode has both `text` and `children`, `text` will be used and `children` will be ignored. So it is recommended to wrap a textNode in a single html tag like `span` if the textNode has brother nodes.
-
-After an element be created, the vnode will have a `$element` property which is a reference of the true dom element, and the dom element will have a `$vnode` property.
-
-## VirtualDOM
-
-Based on the previous features, I created a basical VirtualDOM Class:
-
-```
-import VirtualDOM from './VirtualDOM'
-
-let vdom = new VirtualDOM({
-  template: `
-    <div id="my-test">
-      <span>{{myText}}</span>
-      <a href="javascript:" onclick="{{:clickHandler}}">click me</a>
-      <@if condition="{{isShow}}"><span>I will be show!</span></@if>
-      <ul>
-        <@foreach target="myObj" key="i" value="v">
-          <li>{{i}} {{v}}</li>
-        </@foreach>
-      </ul>
-    </div>
-  `,
-  data: {
-    myText: 'this is my text',
-    isShow: true,
-    myObj: {a: 1, b: 2, c: 3},
-  },
-  events: {
-    click(e) {
-      e.preventDefault()
-      vdom.update({
-        myText: 'this is my new text',
-        isShow: false,
-      })
-    },
-  },
-  selector: '#app',
-})
-
-vdom.render() // then the new dom will be applied into DOM
-```
-
-Now let's look what `vdom` has:
-
-### vdom.template
-
-Get vdom template you have set. You can even reset template by using this.
-
-#### Interpolation
-
-Use `{{value}}` in template string, `value` is the property name of `data`, the value should be string or number.
-
-Use `{{:eventHandler}}` in template string, `eventHandler` is the property name ov `events`, the value should be a function.
-
-#### \@foreach tag
-
-I create a new tag whose name is `@foreach`, like:
-
-```
-<@foreach target="myObj" key="i" value="v">...</@foreach>
-```
-
-**target**
-
-The property name of `data`. The property value can be array or object. If array key will be index, if object key will be property name.
-
-**key**
-
-The interpolation name inner. As you know, `Array.forEach((v, i) => {})`, `i` and `v` is dynamic values, you can use `{{i}}` and `{{v}}` in the tag.
-
-**value**
-
-The same usage with `key`, stands for value.
-
-#### \@if
-
-`@if` tag is a special tag which control the content to be show in dom.
-
-```
-<@if condition="1 < 2">
-  <span>show</span>
-</@if>
-```
-
-**condition**
-
-The condition to be use. There can be interpolations in condition. ie. `condition="{{a}} > {{b}}"`.
-
-### vdom.events
-
-Get events callback functions you have put into. You can even reset events functions by using this.
-
-### vdom.selector
-
-The selector of DOM element which our vdom will be mounted to.
-
-### vdom.vnodes
-
-VNodes which is created by our Class.
-
-### vdom.render()
-
-When a vdom instance created, it will not render to the true DOM until you call render method.
-
-### vdom.update(data)
-
-Use new data to update view. The `data` will be merged into old data.
-
-### vdom.destroy()
-
-Destroy the mounted VNodes. And then you can reuse `render` method to render again before you destroy this instance.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

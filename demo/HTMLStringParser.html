@@ -1,43 +1,16 @@
 <!DOCTYPE html>
 
-<body>
-  <script src="HTMLStringParser.browser.js"></script>
-  <script src="renderToHTMLString.js"></script>
-  <script src="createElement.js"></script>
-  <script>
-  let parser = new HTMLStringParser(`
-    <div id="test">
-      <img src="a.jpg">
-      <input type="checkbox" checked>
-      <p>this is a text <span>color</span> </p>
-    </div>
-  `)
-  let elements = parser.getRoots()
-  console.log(elements)
-
-  let html = renderToHTMLString({
-    name: 'div',
-    attrs: {
-      id: 'test',
-      onclick: `this.style.color = 'red'`,
-    },
-    text: 'My Name',
-  })
-  console.log(html)
-
-  let el = createElement({
-    name: 'div',
-    attrs: {
-      id: 'test',
-      class: 'font-big font-red',
-    },
-    events: {
-      click(e) {
-        e.target.style.color = 'red'
-      },
-    },
-    text: 'Click me!',
-  })
-  document.body.appendChild(el)
-  </script>
-</body>
+<script src="../dist/HTMLStringParser.js"></script>
+<script>
+window['HTMLStringParser'] = window['HTMLStringParser']['default']
+let parser = new HTMLStringParser(`
+  <div id="test">
+    <img src="a.jpg">
+    <input type="checkbox" checked>
+    <p>this is a text <span>color</span> </p>
+  </div>
+`)
+let elements = parser.getRoots()
+console.log(elements)
+console.log(parser.getElementById('test'))
+</script>

@@ -1,24 +1,12 @@
-var Bufferify = require('webpack-bufferify')
-
-function UseDefaultExport() {}
-UseDefaultExport.prototype.apply = Bufferify.prototype.apply
-UseDefaultExport.prototype.process = function(content, file) {
-  if (file === 'HTMLStringParser.browser.js') {
-    return content + "\r\n" + 'window["HTMLStringParser"] = window["HTMLStringParser"]["default"];'
-  }
-  if (file === 'VirtualDOM.browser.js') {
-    return content + "\r\n" + 'window["VirtualDOM"] = window["VirtualDOM"]["default"];'
-  }
-}
-
 module.exports = {
   entry: {
     HTMLStringParser: './HTMLStringParser.js',
-    VirtualDOM: './VirtualDOM.js',
+    renderToHTMLString: './renderToHTMLString.js',
   },
   output: {
-    filename: '[name].browser.js',
-    libraryTarget: 'window',
+    path: __dirname + '/dist',
+    filename: '[name].js',
+    libraryTarget: 'umd',
     library: '[name]',
   },
   module: {
@@ -32,7 +20,4 @@ module.exports = {
       },
     ],
   },
-  plugins: [
-    new UseDefaultExport(),
-  ],
 }

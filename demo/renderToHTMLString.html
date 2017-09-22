@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<script src="../dist/renderToHTMLString.js"></script>
+<script>
+window['renderToHTMLString'] = window['renderToHTMLString']['default']
+let vnode = {
+    name: 'div',
+    attrs: {
+        id: 'test',
+    },
+    children: [
+        {
+            name: 'img',
+            attrs: {
+                src: 'a.jpg',
+            },
+        },
+        {
+            name: 'input',
+            attrs: {
+                type: 'text',
+                value: 23,
+            },
+        }
+    ],
+}
+let htmlstr = renderToHTMLString(vnode)
+console.log(htmlstr)
+</script>

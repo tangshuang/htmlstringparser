@@ -1,4 +1,4 @@
-function renderToHTMLString(json) {
+export default function renderToHTMLString(json) {
   let html = ''
 
   // if it is an Array, it means there are several nodes on the top level
@@ -52,8 +52,4 @@ function createNode(node) {
 
   html += `</${name}>`
   return html
-}
-
-if(typeof module !== 'undefined' && typeof exports === 'object') {
-  module.exports = renderToHTMLString
 }

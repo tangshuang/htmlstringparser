@@ -1,8 +1,8 @@
 {
-  "name": "htmlstring-parser",
-  "version": "1.0.0",
-  "description": "A parser to parse HTML string to js object (json). The final json is the same tree relationship as HTML DOM structure.",
-  "main": "HTMLStringParser.js",
+  "name": "htmlstringparser",
+  "version": "0.1.0",
+  "description": "A parser to parse HTML string to js object (json).",
+  "main": "dist/HTMLStringParser.js",
   "dependencies": {
     "htmlparser2": "^3.9.2"
   },
@@ -10,12 +10,15 @@
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-preset-es2015": "^6.24.1",
-    "webpack": "^3.5.6",
-    "webpack-bufferify": "0.0.5"
+    "webpack": "^3.5.6"
   },
   "scripts": {
     "build": "webpack"
   },
-  "author": "",
-  "license": "ISC"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tangshuang/htmlstringparser.git"
+  },
+  "author": "tangshuang",
+  "license": "MIT"
 }

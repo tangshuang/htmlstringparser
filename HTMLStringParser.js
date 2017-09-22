@@ -5,10 +5,44 @@ export default class HTMLStringParser {
     let self = this
     let elements = []
     let recordtree = []
+    let VNodePRototype = {
+      parent: null,
+      children: [],
+      text: null,
+      getElements() {
+          let elements = []
+          this.children.forEach(item => {
+            elements.push(item)
+            if (item.children.length) {
+              elements = elements.concat(this.getElements(item))
+            }
+          })
+          return elements
+      },
+      getElementById(id) {
+        return self.getElementById.call(this, id)
+      },
+      getElementsByClassName(className) {
+        return self.getElementsByClassName.call(this, className)
+      },
+      getElementsByTagName(tagName) {
+        return self.getElementsByTagName.call(this, tagName)
+      },
+      getElementsByAttribute(attrName, attrValue) {
+        return self.getElementsByAttribute.call(this, attrName, attrValue)
+      },
+      querySelector(selector) {
+        return self.querySelector.call(this, selector)
+      },
+      querySelectorAll(selector) {
+        return self.querySelectorAll.call(this, selector)
+      },
+    }
 
     let parser = new Parser({
       onopentag(name, attrs) {
-        let vnode = self.createVNode(name, attrs)
+        let proto = Object.create(VNodePrototype)
+        let vnode = self.createVNode(name, attrs, proto)
 
         let parent = recordtree.length ? recordtree[recordtree.length - 1] : null
         if (parent) {
@@ -37,52 +71,15 @@ export default class HTMLStringParser {
 
     this.elements = elements
   }
-  static get VNodePrototype() {
-      let self = this
-      return {
-        parent: null,
-        children: [],
-        text: null,
-        getElements() {
-            let elements = []
-            this.children.forEach(item => {
-              elements.push(item)
-              if (item.children.length) {
-                elements = elements.concat(this.getElements(item))
-              }
-            })
-            return elements
-        },
-        getElementById(id) {
-          return self.getElementById.call(this, id)
-        },
-        getElementsByClassName(className) {
-          return self.getElementsByClassName.call(this, className)
-        },
-        getElementsByTagName(tagName) {
-          return self.getElementsByTagName.call(this, tagName)
-        },
-        getElementsByAttribute(attrName, attrValue) {
-          return self.getElementsByAttribute.call(this, attrName, attrValue)
-        },
-        querySelector(selector) {
-          return self.querySelector.call(this, selector)
-        },
-        querySelectorAll(selector) {
-          return self.querySelectorAll.call(this, selector)
-        },
-      }
-  }
-  createVNode(name, attrs) {
-      let obj = Object.create(HTMLStringParser.VNodePrototype)
-      obj.name = name
-      obj.id = attrs.id
-      obj.class = attrs.class ? attrs.class.split(' ') : []
-      obj.attrs = attrs
-      return obj
+  createVNode(name, attrs, proto) {
+    proto.name = name
+    proto.id = attrs.id
+    proto.class = attrs.class ? attrs.class.split(' ') : []
+    proto.attrs = attrs
+    return proto
   }
   getRoots() {
-      return this.elements.filter(item => !item.parent)
+    return this.elements.filter(item => !item.parent)
   }
   getElements() {
     return this.elements
