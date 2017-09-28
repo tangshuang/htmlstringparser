@@ -1,6 +1,6 @@
 {
   "name": "htmlstringparser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A parser to parse HTML string to js object (json).",
   "main": "dist/HTMLStringParser.js",
   "dependencies": {

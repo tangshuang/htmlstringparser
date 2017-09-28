@@ -6437,10 +6437,46 @@ var HTMLStringParser = function () {
     var self = this;
     var elements = [];
     var recordtree = [];
+    var VNodePrototype = {
+      parent: null,
+      children: [],
+      text: null,
+      getElements: function getElements() {
+        var _this = this;
+
+        var elements = [];
+        this.children.forEach(function (item) {
+          elements.push(item);
+          if (item.children.length) {
+            elements = elements.concat(_this.getElements.call(item));
+          }
+        });
+        return elements;
+      },
+      getElementById: function getElementById(id) {
+        return self.getElementById.call(this, id);
+      },
+      getElementsByClassName: function getElementsByClassName(className) {
+        return self.getElementsByClassName.call(this, className);
+      },
+      getElementsByTagName: function getElementsByTagName(tagName) {
+        return self.getElementsByTagName.call(this, tagName);
+      },
+      getElementsByAttribute: function getElementsByAttribute(attrName, attrValue) {
+        return self.getElementsByAttribute.call(this, attrName, attrValue);
+      },
+      querySelector: function querySelector(selector) {
+        return self.querySelector.call(this, selector);
+      },
+      querySelectorAll: function querySelectorAll(selector) {
+        return self.querySelectorAll.call(this, selector);
+      }
+    };
 
     var parser = new __WEBPACK_IMPORTED_MODULE_0_htmlparser2__["Parser"]({
       onopentag: function onopentag(name, attrs) {
-        var vnode = self.createVNode(name, attrs);
+        var proto = Object.create(VNodePrototype);
+        var vnode = self.createVNode(name, attrs, proto);
 
         var parent = recordtree.length ? recordtree[recordtree.length - 1] : null;
         if (parent) {
@@ -6472,13 +6508,12 @@ var HTMLStringParser = function () {
 
   _createClass(HTMLStringParser, [{
     key: 'createVNode',
-    value: function createVNode(name, attrs) {
-      var obj = Object.create(HTMLStringParser.VNodePrototype);
-      obj.name = name;
-      obj.id = attrs.id;
-      obj.class = attrs.class ? attrs.class.split(' ') : [];
-      obj.attrs = attrs;
-      return obj;
+    value: function createVNode(name, attrs, proto) {
+      proto.name = name;
+      proto.id = attrs.id;
+      proto.class = attrs.class ? attrs.class.split(' ') : [];
+      proto.attrs = attrs;
+      return proto;
     }
   }, {
     key: 'getRoots',
@@ -6557,46 +6592,6 @@ var HTMLStringParser = function () {
     value: function querySelector(selector) {
       var results = this.querySelectorAll(selector);
       return results[0];
-    }
-  }], [{
-    key: 'VNodePrototype',
-    get: function get() {
-      var self = this;
-      return {
-        parent: null,
-        children: [],
-        text: null,
-        getElements: function getElements() {
-          var _this = this;
-
-          var elements = [];
-          this.children.forEach(function (item) {
-            elements.push(item);
-            if (item.children.length) {
-              elements = elements.concat(_this.getElements(item));
-            }
-          });
-          return elements;
-        },
-        getElementById: function getElementById(id) {
-          return self.getElementById.call(this, id);
-        },
-        getElementsByClassName: function getElementsByClassName(className) {
-          return self.getElementsByClassName.call(this, className);
-        },
-        getElementsByTagName: function getElementsByTagName(tagName) {
-          return self.getElementsByTagName.call(this, tagName);
-        },
-        getElementsByAttribute: function getElementsByAttribute(attrName, attrValue) {
-          return self.getElementsByAttribute.call(this, attrName, attrValue);
-        },
-        querySelector: function querySelector(selector) {
-          return self.querySelector.call(this, selector);
-        },
-        querySelectorAll: function querySelectorAll(selector) {
-          return self.querySelectorAll.call(this, selector);
-        }
-      };
     }
   }]);
 

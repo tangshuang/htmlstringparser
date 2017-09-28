@@ -11,6 +11,7 @@ let parser = new HTMLStringParser(`
   </div>
 `)
 let elements = parser.getRoots()
-console.log(elements)
-console.log(parser.getElementById('test'))
+let first = elements[0]
+let img = first.getElementsByTagName('img')
+console.log(img)
 </script>

@@ -5,7 +5,7 @@ export default class HTMLStringParser {
     let self = this
     let elements = []
     let recordtree = []
-    let VNodePRototype = {
+    let VNodePrototype = {
       parent: null,
       children: [],
       text: null,
@@ -14,7 +14,7 @@ export default class HTMLStringParser {
           this.children.forEach(item => {
             elements.push(item)
             if (item.children.length) {
-              elements = elements.concat(this.getElements(item))
+              elements = elements.concat(this.getElements.call(item))
             }
           })
           return elements
