@@ -9,15 +9,30 @@ export default class HTMLStringParser {
       parent: null,
       children: [],
       text: null,
+      getText() {
+        let texts = []
+        this.children.forEach(item => {
+          if (typeof item === 'string') {
+            texts.push(item)
+          }
+          if (item.children.length) {
+            texts = texts.concat(this.getText.call(item))
+          }
+        })
+        return texts.join(' ')
+      },
       getElements() {
-          let elements = []
-          this.children.forEach(item => {
-            elements.push(item)
-            if (item.children.length) {
-              elements = elements.concat(this.getElements.call(item))
-            }
-          })
-          return elements
+        let elements = []
+        this.children.forEach(item => {
+          if (typeof item === 'string') {
+            return
+          }
+          elements.push(item)
+          if (item.children.length) {
+            elements = elements.concat(this.getElements.call(item))
+          }
+        })
+        return elements
       },
       getElementById(id) {
         return self.getElementById.call(this, id)
@@ -57,9 +72,17 @@ export default class HTMLStringParser {
         elements.push(vnode)
       },
       ontext(text) {
+        if (!text.trim()) {
+          return
+        }
+
         let vnode = recordtree[recordtree.length - 1]
         if (vnode) {
-          vnode.text = text.trim()
+          let content = text.replace(/\s+/g, ' ')
+          if (!vnode.hasOwnProperty('children')) {
+            vnode.children = []
+          }
+          vnode.children.push(content)
         }
       },
       onclosetag(name) {
