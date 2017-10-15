@@ -112,7 +112,6 @@ A Virtual Node is like:
     class: 'float-right font-big',
     ...
   },
-  text: 'My BLOG', // the text in this tag. Children's tags text will not stay here
   parent: ..., // a reference to another Virtual Node, null if this node is top level
   children: [...], // references to other Virtual Nodes, empty array if no children
 }
@@ -121,6 +120,14 @@ A Virtual Node is like:
 A Virtual Node Tree is constituted by all Virtual Nodes. The structure is the same with your html structure.
 
 And a Virtual Node also has its methods:
+
+### getText()
+
+Get all text string in it.
+
+### getElements() 
+
+Get it's all elements.
 
 ### getElementById(id)
 
@@ -161,8 +168,15 @@ let vnode = {
   },
   children: [
     {
-      name: 'p',
       text: 'I love you!',
+    },
+    {
+      name: 'b',
+      children: [
+        {
+          text: 'I do not want to leave you',
+        },
+      ],
     },
   ],
 }
@@ -187,7 +201,7 @@ class MyParser extends HTMLStringParser {
 
 Then your VNode properties' name change to what you want.
 
-You may notice `proto`, yes this is the key for a VNode to have methods like `getElementById`. If you do not need this, you can drop it by return a new object. `parent`, `children`, `text`, `events` are all in prototype.
+You may notice `proto`, yes this is the key for a VNode to have methods like `getElementById`. If you do not need this, you can drop it by return a new object. `parent`, `children`, `events` are all in prototype.
 
 ## Virtual DOM
 

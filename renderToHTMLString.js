@@ -16,6 +16,10 @@ export default function renderToHTMLString(json) {
 }
 
 function createNode(node) {
+  if (node.text !== undefined) {
+    return node.text
+  }
+
   let name = node.name
   let html = `<${name}`
   let voidElements = ['br', 'hr', 'img', 'input', 'link', 'meta', 'area', 'base', 'col', 'command', 'embed', 'keygen', 'param', 'source', 'track', 'wbr']
@@ -40,11 +44,6 @@ function createNode(node) {
   }
 
   html += '>'
-
-  if (node.text) {
-    html += node.text + `</${name}>`
-    return html
-  }
 
   if (node.children && node.children.length) {
     html += renderToHTMLString(node.children)

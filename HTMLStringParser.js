@@ -2,20 +2,19 @@ import {Parser} from 'htmlparser2'
 
 export default class HTMLStringParser {
   constructor(html) {
-    let self = this
+    let that = this
     let elements = []
     let recordtree = []
     let VNodePrototype = {
       parent: null,
       children: [],
-      text: null,
       getText() {
         let texts = []
         this.children.forEach(item => {
-          if (typeof item === 'string') {
-            texts.push(item)
+          if (item.text !== undefined) {
+            texts.push(item.text)
           }
-          if (item.children.length) {
+          else if (item.children.length) {
             texts = texts.concat(this.getText.call(item))
           }
         })
@@ -24,9 +23,10 @@ export default class HTMLStringParser {
       getElements() {
         let elements = []
         this.children.forEach(item => {
-          if (typeof item === 'string') {
+          if (item.text !== undefined) {
             return
           }
+          
           elements.push(item)
           if (item.children.length) {
             elements = elements.concat(this.getElements.call(item))
@@ -35,29 +35,29 @@ export default class HTMLStringParser {
         return elements
       },
       getElementById(id) {
-        return self.getElementById.call(this, id)
+        return that.getElementById.call(this, id)
       },
       getElementsByClassName(className) {
-        return self.getElementsByClassName.call(this, className)
+        return that.getElementsByClassName.call(this, className)
       },
       getElementsByTagName(tagName) {
-        return self.getElementsByTagName.call(this, tagName)
+        return that.getElementsByTagName.call(this, tagName)
       },
       getElementsByAttribute(attrName, attrValue) {
-        return self.getElementsByAttribute.call(this, attrName, attrValue)
+        return that.getElementsByAttribute.call(this, attrName, attrValue)
       },
       querySelector(selector) {
-        return self.querySelector.call(this, selector)
+        return that.querySelector.call(this, selector)
       },
       querySelectorAll(selector) {
-        return self.querySelectorAll.call(this, selector)
+        return that.querySelectorAll.call(this, selector)
       },
     }
 
     let parser = new Parser({
       onopentag(name, attrs) {
         let proto = Object.create(VNodePrototype)
-        let vnode = self.createVNode(name, attrs, proto)
+        let vnode = that.createVNode(name, attrs, proto)
 
         let parent = recordtree.length ? recordtree[recordtree.length - 1] : null
         if (parent) {
@@ -75,15 +75,21 @@ export default class HTMLStringParser {
         if (!text.trim()) {
           return
         }
-
-        let vnode = recordtree[recordtree.length - 1]
-        if (vnode) {
-          let content = text.replace(/\s+/g, ' ')
-          if (!vnode.hasOwnProperty('children')) {
-            vnode.children = []
-          }
-          vnode.children.push(content)
+        
+        let parent = recordtree.length ? recordtree[recordtree.length - 1] : null
+        let content = text.replace(/\s+/g, ' ')
+        let vnode = {
+          text: content,
+          parent,
         }
+        if (parent) {
+          if (!parent.hasOwnProperty('children')) {
+            parent.children = []
+          }
+          parent.children.push(vnode)
+        }
+        
+        elements.push(vnode)
       },
       onclosetag(name) {
         recordtree.pop()
@@ -96,7 +102,7 @@ export default class HTMLStringParser {
   }
   createVNode(name, attrs, proto) {
     proto.name = name
-    proto.id = attrs.id
+    proto.id = attrs.id || ''
     proto.class = attrs.class ? attrs.class.split(' ') : []
     proto.attrs = attrs
     return proto
